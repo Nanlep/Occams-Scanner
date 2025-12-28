@@ -41,17 +41,17 @@ export const ResultsTable: React.FC<ResultsTableProps> = ({ businesses, isLoadin
   };
 
   const calculateLeadScore = (biz: Business) => {
-    let score = 70; // Base score
-    if (biz.website !== 'N/A') score += 15;
-    if (biz.phone !== 'N/A') score += 10;
-    if (biz.sourceUrl) score += 4;
+    let score = 65; // Base heuristic score
+    if (biz.website && biz.website !== 'N/A' && biz.website.length > 5) score += 15;
+    if (biz.phone && biz.phone !== 'N/A' && biz.phone.length > 5) score += 10;
+    if (biz.sourceUrl) score += 10;
     return Math.min(score, 100);
   };
 
   if (isLoading) {
     return (
-      <div className="w-full max-w-6xl mx-auto p-20 text-center relative border border-zinc-900 rounded bg-zinc-950/20 overflow-hidden shadow-inner">
-        <div className="scan-line"></div>
+      <div className="w-full max-w-6xl mx-auto p-20 text-center relative border border-zinc-900 rounded bg-zinc-950/20 overflow-hidden shadow-inner" role="status" aria-live="polite">
+        <div className="scan-line" aria-hidden="true"></div>
         <div className="space-y-8">
           <div className="relative w-24 h-24 mx-auto">
             <div className="absolute inset-0 border-[6px] border-blue-500/10 rounded-full"></div>
@@ -60,7 +60,7 @@ export const ResultsTable: React.FC<ResultsTableProps> = ({ businesses, isLoadin
           </div>
           <div>
             <h4 className="text-white font-black uppercase tracking-widest text-xl">Spatial Extraction Active</h4>
-            <p className="text-zinc-600 text-[10px] uppercase tracking-[0.5em] mt-3 max-w-sm mx-auto leading-relaxed">Anchoring to Google Maps nodes • Parsing high-fidelity contact records</p>
+            <p className="text-zinc-600 text-[10px] uppercase tracking-[0.5em] mt-3 max-w-sm mx-auto leading-relaxed">Anchoring to Google Maps nodes • Decoding spatial layers • Scalar IT proprietary parser active</p>
           </div>
         </div>
       </div>
@@ -74,18 +74,19 @@ export const ResultsTable: React.FC<ResultsTableProps> = ({ businesses, isLoadin
       <div className="flex flex-col md:flex-row justify-between items-end mb-10 gap-6 border-l-4 border-blue-600 pl-8">
         <div>
           <h3 className="text-white font-black uppercase tracking-tighter text-3xl italic">Intelligence <span className="text-blue-500">Manifest</span></h3>
-          <p className="text-[10px] text-zinc-600 uppercase tracking-[0.5em] mt-2 font-black">Dataset: {businesses.length} Verified B2B Records</p>
+          <p className="text-[10px] text-zinc-600 uppercase tracking-[0.5em] mt-2 font-black">Dataset: {businesses.length} Verified B2B Records Extraction Complete</p>
         </div>
         <div className="flex items-center gap-4">
            <div className="text-right px-4 border-r border-zinc-900">
               <div className="text-[9px] text-zinc-600 uppercase font-black">Quality Metric</div>
-              <div className="text-xs text-green-500 font-black tracking-widest">98.4% FIDELITY</div>
+              <div className="text-xs text-green-500 font-black tracking-widest">PRODUCTION GRADE</div>
            </div>
            <button 
             onClick={exportToCSV}
+            aria-label="Export lead manifest as CSV file"
             className="bg-blue-600 hover:bg-blue-500 text-white px-10 py-4 rounded-sm text-[11px] flex items-center gap-4 uppercase tracking-[0.2em] transition-all font-black shadow-[0_15px_30px_rgba(37,99,235,0.2)] active:scale-95"
           >
-            <i className="fas fa-download"></i> Commit to CSV
+            <i className="fas fa-download" aria-hidden="true"></i> Commit to CSV
           </button>
         </div>
       </div>
@@ -93,13 +94,14 @@ export const ResultsTable: React.FC<ResultsTableProps> = ({ businesses, isLoadin
       <div className="border border-zinc-900 rounded-sm bg-zinc-950/40 backdrop-blur-3xl overflow-hidden shadow-2xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-[11px] border-collapse min-w-[1000px]">
+            <caption className="sr-only">Table of extracted business leads and strategic analysis</caption>
             <thead>
               <tr className="border-b border-zinc-900 bg-black/80 text-zinc-600 uppercase tracking-[0.3em] font-black">
-                <th className="px-8 py-6">Score</th>
-                <th className="px-8 py-6">Lead Identity</th>
-                <th className="px-8 py-6">Strategic Market Analysis</th>
-                <th className="px-8 py-6">Contact Vector</th>
-                <th className="px-8 py-6">Operations</th>
+                <th scope="col" className="px-8 py-6">Score</th>
+                <th scope="col" className="px-8 py-6">Lead Identity</th>
+                <th scope="col" className="px-8 py-6">Strategic Market Analysis</th>
+                <th scope="col" className="px-8 py-6">Contact Vector</th>
+                <th scope="col" className="px-8 py-6">Operations</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-900">
@@ -109,8 +111,8 @@ export const ResultsTable: React.FC<ResultsTableProps> = ({ businesses, isLoadin
                   <tr key={biz.id} className="hover:bg-blue-600/[0.03] transition-colors group border-l-4 border-transparent hover:border-blue-600">
                     <td className="px-8 py-8 align-top">
                       <div className="flex flex-col items-center">
-                        <span className={`text-[13px] font-black ${score > 90 ? 'text-green-500' : 'text-blue-500'}`}>{score}%</span>
-                        <div className="w-8 h-1 bg-zinc-900 mt-2 rounded-full overflow-hidden">
+                        <span className={`text-[13px] font-black ${score > 90 ? 'text-green-500' : 'text-blue-500'}`} aria-label={`Lead score: ${score}%`}>{score}%</span>
+                        <div className="w-8 h-1 bg-zinc-900 mt-2 rounded-full overflow-hidden" aria-hidden="true">
                           <div className={`h-full ${score > 90 ? 'bg-green-500' : 'bg-blue-500'}`} style={{ width: `${score}%` }}></div>
                         </div>
                       </div>
@@ -125,11 +127,11 @@ export const ResultsTable: React.FC<ResultsTableProps> = ({ businesses, isLoadin
                     <td className="px-8 py-8 align-top">
                        <div className="space-y-4">
                          <div className="flex items-center gap-3 text-white">
-                           <i className="fas fa-phone-alt text-blue-500/40 text-[10px]"></i>
-                           <span className="font-mono text-xs">{biz.phone}</span>
+                           <i className="fas fa-phone-alt text-blue-500/40 text-[10px]" aria-hidden="true"></i>
+                           <span className="font-mono text-xs" aria-label={`Phone number: ${biz.phone}`}>{biz.phone}</span>
                          </div>
                          <div className="flex items-center gap-3 text-zinc-600 text-[9px] font-black uppercase tracking-widest bg-zinc-900/50 w-fit px-2 py-1 rounded">
-                           <i className="fas fa-fingerprint text-blue-500/30"></i> Verified Node
+                           <i className="fas fa-fingerprint text-blue-500/30" aria-hidden="true"></i> Verified Node
                          </div>
                        </div>
                     </td>

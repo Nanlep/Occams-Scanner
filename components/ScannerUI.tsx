@@ -22,6 +22,7 @@ export const ScannerUI: React.FC<ScannerUIProps> = ({ onResults, onLoading }) =>
   }, []);
 
   const initiateSession = () => {
+    setError(null);
     if (!query.category || !query.location) {
       setError('VALIDATION ERROR: Target Sector and Territory coordinates are required.');
       return;
@@ -32,13 +33,14 @@ export const ScannerUI: React.FC<ScannerUIProps> = ({ onResults, onLoading }) =>
     }
 
     setIsProcessing(true);
-    setError(null);
     
+    // PRODUCTION: Scalar IT Merchant Key Configuration
     const merchantKey = "YOUR_BANI_MERCHANT_KEY"; 
 
     try {
+      // Robust script check for production environments (Ad-blockers etc)
       if (typeof BaniPopUp === 'undefined') {
-        throw new Error('Payment Bridge (BaniPopUp) failed to initialize.');
+        throw new Error('Payment Bridge (BaniPopUp) script failed to load. Please disable ad-blockers and refresh.');
       }
 
       BaniPopUp({
@@ -49,7 +51,7 @@ export const ScannerUI: React.FC<ScannerUIProps> = ({ onResults, onLoading }) =>
         ref: sessionId,
         onClose: () => setIsProcessing(false),
         callback: (response: any) => {
-          if (response.status === "success" || response.message === "Successful") {
+          if (response && (response.status === "success" || response.message === "Successful")) {
             executeDeepScan();
           } else {
             setError('PAYMENT ALERT: Authorization failed or was cancelled by user.');
@@ -83,21 +85,21 @@ export const ScannerUI: React.FC<ScannerUIProps> = ({ onResults, onLoading }) =>
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-6">
+    <section className="w-full max-w-4xl mx-auto p-6" aria-labelledby="interface-heading">
       <div className="bg-zinc-950 border-2 border-zinc-900 p-10 rounded shadow-[0_40px_100px_rgba(0,0,0,0.6)] relative overflow-hidden">
         <div className="scan-line opacity-10"></div>
         
         <div className="flex flex-col sm:flex-row justify-between items-start mb-12 gap-6">
           <div>
             <div className="flex items-center gap-4">
-              <div className="w-3 h-3 bg-blue-600 rounded-full animate-pulse shadow-[0_0_15px_#2563eb]"></div>
-              <h2 className="text-2xl font-black text-white uppercase tracking-tighter">Command Interface</h2>
+              <div className="w-3 h-3 bg-blue-600 rounded-full animate-pulse shadow-[0_0_15px_#2563eb]" aria-hidden="true"></div>
+              <h2 id="interface-heading" className="text-2xl font-black text-white uppercase tracking-tighter">Command Interface</h2>
             </div>
             <p className="text-[11px] text-zinc-700 uppercase tracking-[0.5em] mt-3 font-black">Active Session: {sessionId}</p>
           </div>
           <div className="flex flex-col items-end">
-            <div className="bg-blue-600/10 border-2 border-blue-600/20 px-6 py-3 rounded flex items-center gap-4 shadow-inner">
-              <i className="fas fa-credit-card text-blue-500 text-sm"></i>
+            <div className="bg-blue-600/10 border-2 border-blue-600/20 px-6 py-3 rounded flex items-center gap-4 shadow-inner" role="status" aria-label="Current extraction price">
+              <i className="fas fa-credit-card text-blue-500 text-sm" aria-hidden="true"></i>
               <span className="text-lg font-black text-white tracking-widest">$4.89 <span className="text-[10px] text-zinc-600 font-black uppercase">/ Deep-Scan</span></span>
             </div>
           </div>
@@ -105,27 +107,31 @@ export const ScannerUI: React.FC<ScannerUIProps> = ({ onResults, onLoading }) =>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
           <div className="space-y-4">
-            <label className="text-[11px] text-zinc-600 uppercase font-black tracking-[0.3em] flex items-center gap-3">
-              <i className="fas fa-search-location text-blue-600"></i> Target Industry
+            <label htmlFor="industry-input" className="text-[11px] text-zinc-600 uppercase font-black tracking-[0.3em] flex items-center gap-3">
+              <i className="fas fa-search-location text-blue-600" aria-hidden="true"></i> Target Industry
             </label>
             <input 
+              id="industry-input"
               type="text"
               disabled={isProcessing}
               placeholder="e.g. Fintech Startups"
-              className="w-full bg-black border-2 border-zinc-900 p-5 rounded text-sm focus:border-blue-600 transition-all placeholder:text-zinc-800 text-white font-bold disabled:opacity-50"
+              aria-label="Target Industry Sector"
+              className="w-full bg-black border-2 border-zinc-900 p-5 rounded text-sm focus:border-blue-600 outline-none transition-all placeholder:text-zinc-800 text-white font-bold disabled:opacity-50"
               value={query.category}
               onChange={e => setQuery({ ...query, category: e.target.value })}
             />
           </div>
           <div className="space-y-4">
-            <label className="text-[11px] text-zinc-600 uppercase font-black tracking-[0.3em] flex items-center gap-3">
-              <i className="fas fa-globe-africa text-blue-600"></i> Territory Focus
+            <label htmlFor="territory-input" className="text-[11px] text-zinc-600 uppercase font-black tracking-[0.3em] flex items-center gap-3">
+              <i className="fas fa-globe-africa text-blue-600" aria-hidden="true"></i> Territory Focus
             </label>
             <input 
+              id="territory-input"
               type="text"
               disabled={isProcessing}
               placeholder="e.g. Nairobi, Kenya"
-              className="w-full bg-black border-2 border-zinc-900 p-5 rounded text-sm focus:border-blue-600 transition-all placeholder:text-zinc-800 text-white font-bold disabled:opacity-50"
+              aria-label="Target Geographical Territory"
+              className="w-full bg-black border-2 border-zinc-900 p-5 rounded text-sm focus:border-blue-600 outline-none transition-all placeholder:text-zinc-800 text-white font-bold disabled:opacity-50"
               value={query.location}
               onChange={e => setQuery({ ...query, location: e.target.value })}
             />
@@ -148,28 +154,29 @@ export const ScannerUI: React.FC<ScannerUIProps> = ({ onResults, onLoading }) =>
         <button 
           onClick={initiateSession}
           disabled={isProcessing}
+          aria-busy={isProcessing}
           className="mt-10 w-full bg-blue-600 hover:bg-blue-500 disabled:bg-zinc-900 text-white font-black py-6 px-10 rounded uppercase tracking-[0.5em] transition-all flex items-center justify-center gap-6 active:scale-[0.98] shadow-[0_20px_50px_rgba(37,99,235,0.3)] disabled:shadow-none group"
         >
           {isProcessing ? (
-            <><i className="fas fa-circle-notch animate-spin"></i> Authorizing Node...</>
+            <><i className="fas fa-circle-notch animate-spin" aria-hidden="true"></i> Authorizing Node...</>
           ) : (
             <>
-              <i className="fas fa-key text-xs group-hover:rotate-45 transition-transform"></i> 
+              <i className="fas fa-key text-xs group-hover:rotate-45 transition-transform" aria-hidden="true"></i> 
               Initiate Extraction Sequence
             </>
           )}
         </button>
 
         {error && (
-          <div className="mt-8 p-6 bg-red-950/20 border-l-[6px] border-red-600 text-red-400 text-[11px] rounded-r-sm font-mono flex items-start gap-6 animate-shake shadow-2xl">
-            <i className="fas fa-radiation mt-0.5 text-lg"></i>
+          <div className="mt-8 p-6 bg-red-950/20 border-l-[6px] border-red-600 text-red-400 text-[11px] rounded-r-sm font-mono flex items-start gap-6 animate-shake shadow-2xl" role="alert">
+            <i className="fas fa-radiation mt-0.5 text-lg" aria-hidden="true"></i>
             <div className="leading-relaxed">
-              <div className="font-black mb-1 uppercase tracking-widest text-red-500">Critical: Auth Violation</div>
+              <div className="font-black mb-1 uppercase tracking-widest text-red-500">Critical: Station Alert</div>
               {error}
             </div>
           </div>
         )}
       </div>
-    </div>
+    </section>
   );
 };
