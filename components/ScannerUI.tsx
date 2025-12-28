@@ -12,6 +12,7 @@ declare const BaniPopUp: any;
 
 export const ScannerUI: React.FC<ScannerUIProps> = ({ onResults, onLoading }) => {
   const [query, setQuery] = useState<ScanQuery>({ category: '', location: '' });
+  const [currency, setCurrency] = useState<'USD' | 'NGN'>('NGN');
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(true);
@@ -36,6 +37,7 @@ export const ScannerUI: React.FC<ScannerUIProps> = ({ onResults, onLoading }) =>
     
     // PRODUCTION: Scalar IT Merchant Key Configuration
     const merchantKey = "YOUR_BANI_MERCHANT_KEY"; 
+    const amount = currency === 'NGN' ? 4899 : 4.89;
 
     try {
       // Robust script check for production environments (Ad-blockers etc)
@@ -44,7 +46,7 @@ export const ScannerUI: React.FC<ScannerUIProps> = ({ onResults, onLoading }) =>
       }
 
       BaniPopUp({
-        amount: 4.89,
+        amount: amount,
         phoneNumber: "",
         email: "",
         merchantKey: merchantKey,
@@ -97,10 +99,27 @@ export const ScannerUI: React.FC<ScannerUIProps> = ({ onResults, onLoading }) =>
             </div>
             <p className="text-[11px] text-zinc-700 uppercase tracking-[0.5em] mt-3 font-black">Active Session: {sessionId}</p>
           </div>
-          <div className="flex flex-col items-end">
+          <div className="flex flex-col items-end gap-3">
+            <div className="flex bg-black border border-zinc-800 rounded p-1">
+              <button 
+                onClick={() => setCurrency('NGN')}
+                className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all rounded ${currency === 'NGN' ? 'bg-blue-600 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+              >
+                NGN
+              </button>
+              <button 
+                onClick={() => setCurrency('USD')}
+                className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all rounded ${currency === 'USD' ? 'bg-blue-600 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+              >
+                USD
+              </button>
+            </div>
             <div className="bg-blue-600/10 border-2 border-blue-600/20 px-6 py-3 rounded flex items-center gap-4 shadow-inner" role="status" aria-label="Current extraction price">
               <i className="fas fa-credit-card text-blue-500 text-sm" aria-hidden="true"></i>
-              <span className="text-lg font-black text-white tracking-widest">$4.89 <span className="text-[10px] text-zinc-600 font-black uppercase">/ Deep-Scan</span></span>
+              <span className="text-lg font-black text-white tracking-widest">
+                {currency === 'NGN' ? '₦4,899' : '$4.89'} 
+                <span className="text-[10px] text-zinc-600 font-black uppercase ml-2">/ Deep-Scan</span>
+              </span>
             </div>
           </div>
         </div>
@@ -147,7 +166,7 @@ export const ScannerUI: React.FC<ScannerUIProps> = ({ onResults, onLoading }) =>
             className="w-5 h-5 accent-blue-600 bg-black border-zinc-800"
           />
           <label htmlFor="tos" className="text-[10px] text-zinc-600 uppercase tracking-[0.2em] cursor-pointer hover:text-zinc-400 transition-colors font-bold">
-            Acknowledge Enterprise Compliance & Mandatory $4.89 Authorization
+            Acknowledge Enterprise Compliance & Mandatory {currency === 'NGN' ? '₦4,899' : '$4.89'} Authorization
           </label>
         </div>
 

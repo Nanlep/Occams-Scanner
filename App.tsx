@@ -145,7 +145,7 @@ const App: React.FC = () => {
             </h2>
             <p className="text-zinc-500 max-w-3xl mx-auto text-2xl font-light leading-relaxed mb-12">
               Deep-scan any territory. Extract high-fidelity business records. 
-              Populate your sales pipeline with $4.89 session efficiency.
+              Populate your sales pipeline with ₦4,899 or $4.89 session efficiency.
             </p>
           </div>
         )}
