@@ -4,7 +4,7 @@ import { ScanQuery, Business } from '../types';
 import { scanBusinesses } from '../services/geminiService';
 
 interface ScannerUIProps {
-  onResults: (results: Business[]) => void;
+  onResults: (results: Business[], query: ScanQuery) => void;
   onLoading: (isLoading: boolean) => void;
 }
 
@@ -18,7 +18,6 @@ export const ScannerUI: React.FC<ScannerUIProps> = ({ onResults, onLoading }) =>
   const [sessionId, setSessionId] = useState('');
 
   useEffect(() => {
-    // Generate a unique session ID for transaction tracking
     setSessionId(`OM-${Math.random().toString(36).substring(2, 9).toUpperCase()}`);
   }, []);
 
@@ -35,7 +34,6 @@ export const ScannerUI: React.FC<ScannerUIProps> = ({ onResults, onLoading }) =>
     setIsProcessing(true);
     setError(null);
     
-    // PRODUCTION: Ensure this matches your Bani.africa dashboard key
     const merchantKey = "YOUR_BANI_MERCHANT_KEY"; 
 
     try {
@@ -48,7 +46,7 @@ export const ScannerUI: React.FC<ScannerUIProps> = ({ onResults, onLoading }) =>
         phoneNumber: "",
         email: "",
         merchantKey: merchantKey,
-        ref: sessionId, // Use our session ID as the Bani reference
+        ref: sessionId,
         onClose: () => setIsProcessing(false),
         callback: (response: any) => {
           if (response.status === "success" || response.message === "Successful") {
@@ -68,13 +66,13 @@ export const ScannerUI: React.FC<ScannerUIProps> = ({ onResults, onLoading }) =>
 
   const executeDeepScan = async () => {
     onLoading(true);
-    setIsProcessing(true); // Keep locked during scan
+    setIsProcessing(true);
     try {
       const results = await scanBusinesses(query);
       if (results.length === 0) {
         setError('SCAN COMPLETE: No high-probability leads detected in this sector matrix.');
       } else {
-        onResults(results);
+        onResults(results, query);
       }
     } catch (err: any) {
       setError(`SCAN FAILURE: ${err?.message || 'Data integrity violation during extraction.'}`);
@@ -86,87 +84,87 @@ export const ScannerUI: React.FC<ScannerUIProps> = ({ onResults, onLoading }) =>
 
   return (
     <div className="w-full max-w-4xl mx-auto p-6">
-      <div className="bg-zinc-900 border border-zinc-800 p-8 rounded shadow-[0_20px_50px_rgba(0,0,0,0.5)] relative overflow-hidden">
+      <div className="bg-zinc-950 border-2 border-zinc-900 p-10 rounded shadow-[0_40px_100px_rgba(0,0,0,0.6)] relative overflow-hidden">
         <div className="scan-line opacity-10"></div>
         
-        <div className="flex flex-col sm:flex-row justify-between items-start mb-10 gap-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start mb-12 gap-6">
           <div>
-            <div className="flex items-center gap-3">
-              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse shadow-[0_0_8px_#3b82f6]"></div>
-              <h2 className="text-xl font-black text-white uppercase tracking-tighter">Command Interface</h2>
+            <div className="flex items-center gap-4">
+              <div className="w-3 h-3 bg-blue-600 rounded-full animate-pulse shadow-[0_0_15px_#2563eb]"></div>
+              <h2 className="text-2xl font-black text-white uppercase tracking-tighter">Command Interface</h2>
             </div>
-            <p className="text-[10px] text-zinc-600 uppercase tracking-[0.4em] mt-1 font-bold">Session ID: {sessionId}</p>
+            <p className="text-[11px] text-zinc-700 uppercase tracking-[0.5em] mt-3 font-black">Active Session: {sessionId}</p>
           </div>
           <div className="flex flex-col items-end">
-            <div className="bg-blue-600/10 border border-blue-500/30 px-4 py-2 rounded flex items-center gap-3">
-              <i className="fas fa-coins text-blue-500 text-xs"></i>
-              <span className="text-sm font-black text-white tracking-widest">$4.89 <span className="text-[9px] text-zinc-500 font-normal">/ SCAN</span></span>
+            <div className="bg-blue-600/10 border-2 border-blue-600/20 px-6 py-3 rounded flex items-center gap-4 shadow-inner">
+              <i className="fas fa-credit-card text-blue-500 text-sm"></i>
+              <span className="text-lg font-black text-white tracking-widest">$4.89 <span className="text-[10px] text-zinc-600 font-black uppercase">/ Deep-Scan</span></span>
             </div>
           </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-          <div className="space-y-3">
-            <label className="text-[10px] text-zinc-500 uppercase font-black tracking-widest flex items-center gap-2">
-              <i className="fas fa-layer-group"></i> Target Sector
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+          <div className="space-y-4">
+            <label className="text-[11px] text-zinc-600 uppercase font-black tracking-[0.3em] flex items-center gap-3">
+              <i className="fas fa-search-location text-blue-600"></i> Target Industry
             </label>
             <input 
               type="text"
               disabled={isProcessing}
-              placeholder="e.g. Fintech or SaaS"
-              className="w-full bg-black border border-zinc-800 p-4 rounded text-sm focus:border-blue-500 transition-all placeholder:text-zinc-800 text-white font-bold disabled:opacity-50"
+              placeholder="e.g. Fintech Startups"
+              className="w-full bg-black border-2 border-zinc-900 p-5 rounded text-sm focus:border-blue-600 transition-all placeholder:text-zinc-800 text-white font-bold disabled:opacity-50"
               value={query.category}
               onChange={e => setQuery({ ...query, category: e.target.value })}
             />
           </div>
-          <div className="space-y-3">
-            <label className="text-[10px] text-zinc-500 uppercase font-black tracking-widest flex items-center gap-2">
-              <i className="fas fa-map-marked-alt"></i> Territory Code
+          <div className="space-y-4">
+            <label className="text-[11px] text-zinc-600 uppercase font-black tracking-[0.3em] flex items-center gap-3">
+              <i className="fas fa-globe-africa text-blue-600"></i> Territory Focus
             </label>
             <input 
               type="text"
               disabled={isProcessing}
-              placeholder="e.g. Johannesburg, SA"
-              className="w-full bg-black border border-zinc-800 p-4 rounded text-sm focus:border-blue-500 transition-all placeholder:text-zinc-800 text-white font-bold disabled:opacity-50"
+              placeholder="e.g. Nairobi, Kenya"
+              className="w-full bg-black border-2 border-zinc-900 p-5 rounded text-sm focus:border-blue-600 transition-all placeholder:text-zinc-800 text-white font-bold disabled:opacity-50"
               value={query.location}
               onChange={e => setQuery({ ...query, location: e.target.value })}
             />
           </div>
         </div>
 
-        <div className="mt-8 flex items-center gap-3 bg-zinc-950/50 p-3 border border-zinc-800/50 rounded">
+        <div className="mt-10 flex items-center gap-4 bg-zinc-900/20 p-5 border border-zinc-900 rounded shadow-inner">
           <input 
             type="checkbox" 
             id="tos" 
             checked={agreedToTerms}
             onChange={e => setAgreedToTerms(e.target.checked)}
-            className="w-4 h-4 accent-blue-600 bg-black border-zinc-700"
+            className="w-5 h-5 accent-blue-600 bg-black border-zinc-800"
           />
-          <label htmlFor="tos" className="text-[9px] text-zinc-600 uppercase tracking-widest cursor-pointer hover:text-zinc-400 transition-colors">
-            Acknowledge Enterprise Data Policy & Transaction Consent
+          <label htmlFor="tos" className="text-[10px] text-zinc-600 uppercase tracking-[0.2em] cursor-pointer hover:text-zinc-400 transition-colors font-bold">
+            Acknowledge Enterprise Compliance & Mandatory $4.89 Authorization
           </label>
         </div>
 
         <button 
           onClick={initiateSession}
           disabled={isProcessing}
-          className="mt-8 w-full bg-blue-600 hover:bg-blue-500 disabled:bg-zinc-800 text-white font-black py-5 px-6 rounded uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-4 active:scale-[0.97] shadow-[0_10px_30px_rgba(59,130,246,0.2)] disabled:shadow-none group"
+          className="mt-10 w-full bg-blue-600 hover:bg-blue-500 disabled:bg-zinc-900 text-white font-black py-6 px-10 rounded uppercase tracking-[0.5em] transition-all flex items-center justify-center gap-6 active:scale-[0.98] shadow-[0_20px_50px_rgba(37,99,235,0.3)] disabled:shadow-none group"
         >
           {isProcessing ? (
-            <><i className="fas fa-sync-alt animate-spin"></i> Initializing Encryption...</>
+            <><i className="fas fa-circle-notch animate-spin"></i> Authorizing Node...</>
           ) : (
             <>
-              <i className="fas fa-lock-open text-xs group-hover:rotate-12 transition-transform"></i> 
-              Authorize Extraction Sequence
+              <i className="fas fa-key text-xs group-hover:rotate-45 transition-transform"></i> 
+              Initiate Extraction Sequence
             </>
           )}
         </button>
 
         {error && (
-          <div className="mt-6 p-5 bg-red-950/20 border-l-4 border-red-600 text-red-400 text-[10px] rounded-r-sm font-mono flex items-start gap-4 animate-shake">
-            <i className="fas fa-exclamation-circle mt-0.5 text-sm"></i>
+          <div className="mt-8 p-6 bg-red-950/20 border-l-[6px] border-red-600 text-red-400 text-[11px] rounded-r-sm font-mono flex items-start gap-6 animate-shake shadow-2xl">
+            <i className="fas fa-radiation mt-0.5 text-lg"></i>
             <div className="leading-relaxed">
-              <div className="font-black mb-1">STATION_ALERT: [0x404_AUTH_FAILURE]</div>
+              <div className="font-black mb-1 uppercase tracking-widest text-red-500">Critical: Auth Violation</div>
               {error}
             </div>
           </div>

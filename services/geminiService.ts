@@ -25,36 +25,30 @@ export async function scanBusinesses(query: ScanQuery): Promise<Business[]> {
     console.warn("Geolocation context unavailable. Proceeding with global search.");
   }
 
-  // Refined prompt for B2B Lead Gen excellence
-  const prompt = `ENTERPRISE LEAD EXTRACTION: 
-Target Sector: ${query.category}
-Target Territory: ${query.location}
+  const systemInstruction = `You are the Occam Matrix Extraction Engine, a professional B2B lead generation tool. 
+Your task is to find high-value businesses registered on Google Maps based on a specific Sector and Territory.
 
-OBJECTIVE: Extract high-quality B2B leads. For each entity, provide verified details including:
-1. Official Name
-2. Exact Physical Address
-3. Primary Business Phone
-4. Website URL (or 'N/A')
-5. Strategic Description (Industry niche, services provided)
-6. Geographic Coordinates (Lat/Lng)
+OUTPUT REQUIREMENTS:
+- Provide 10-15 high-fidelity leads.
+- Each lead MUST include: Name, Address, Phone, Website, and a Strategic Analysis (Description).
+- Use Google Maps to verify coordinates (LAT/LNG) and source links.
 
-STRICT FORMATTING: Wrap each lead in [[START]] and [[END]] tags.
-Inside tags, use EXACT labels:
+STRICT FORMATTING:
+Wrap each lead in [[START]] and [[END]] tags.
 NAME: [Value]
 ADDRESS: [Value]
 PHONE: [Value]
 WEB: [Value]
-DESC: [Value]
+DESC: [Strategic 2-sentence market analysis]
 LAT: [Value]
-LNG: [Value]
-
-Use Google Maps grounding to ensure the highest data fidelity.`;
+LNG: [Value]`;
 
   try {
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
-      contents: prompt,
+      contents: `Extract leads for Sector: ${query.category} in Territory: ${query.location}`,
       config: {
+        systemInstruction,
         tools: [{ googleMaps: {} }],
         ...(toolConfig ? { toolConfig } : {}),
         temperature: 0.1,
@@ -64,7 +58,6 @@ Use Google Maps grounding to ensure the highest data fidelity.`;
     const text = response.text || "";
     const businesses = parseGeminiResponse(text);
     
-    // Enrich with grounding metadata
     const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
     return businesses.map(biz => {
       const match = chunks.find(chunk => 
@@ -78,7 +71,7 @@ Use Google Maps grounding to ensure the highest data fidelity.`;
       };
     });
   } catch (error) {
-    console.error("Critical Extraction Failure:", error);
+    console.error("Extraction Failure:", error);
     throw error;
   }
 }
@@ -99,7 +92,7 @@ function parseGeminiResponse(text: string): Business[] {
     };
 
     const name = getVal('NAME');
-    if (name === 'N/A') continue;
+    if (name === 'N/A' || name.length < 2) continue;
 
     businesses.push({
       id: Math.random().toString(36).substring(2, 11).toUpperCase(),
