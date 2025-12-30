@@ -11,7 +11,7 @@ interface ScannerUIProps {
 declare const BaniPopUp: any;
 
 export const ScannerUI: React.FC<ScannerUIProps> = ({ onResults, onLoading }) => {
-  const [query, setQuery] = useState<ScanQuery>({ category: '', location: '' });
+  const [query, setQuery] = useState<ScanQuery>({ category: '', location: '', booleanLogic: '' });
   const [currency, setCurrency] = useState<'USD' | 'NGN'>('NGN');
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -34,15 +34,12 @@ export const ScannerUI: React.FC<ScannerUIProps> = ({ onResults, onLoading }) =>
     }
 
     setIsProcessing(true);
-    
-    // PRODUCTION: Scalar IT Merchant Key Configuration
     const merchantKey = "YOUR_BANI_MERCHANT_KEY"; 
     const amount = currency === 'NGN' ? 4899 : 4.89;
 
     try {
-      // Robust script check for production environments (Ad-blockers etc)
       if (typeof BaniPopUp === 'undefined') {
-        throw new Error('Payment Bridge (BaniPopUp) script failed to load. Please disable ad-blockers and refresh.');
+        throw new Error('Payment Bridge failed to load. Check connection.');
       }
 
       BaniPopUp({
@@ -56,14 +53,13 @@ export const ScannerUI: React.FC<ScannerUIProps> = ({ onResults, onLoading }) =>
           if (response && (response.status === "success" || response.message === "Successful")) {
             executeDeepScan();
           } else {
-            setError('PAYMENT ALERT: Authorization failed or was cancelled by user.');
+            setError('PAYMENT ALERT: Authorization failed.');
             setIsProcessing(false);
           }
         }
       });
     } catch (err: any) {
-      console.error("Critical Deployment Failure:", err);
-      setError(`SYSTEM ALERT: ${err.message || 'Payment engine unreachable.'}`);
+      setError(`SYSTEM ALERT: ${err.message}`);
       setIsProcessing(false);
     }
   };
@@ -74,12 +70,12 @@ export const ScannerUI: React.FC<ScannerUIProps> = ({ onResults, onLoading }) =>
     try {
       const results = await scanBusinesses(query);
       if (results.length === 0) {
-        setError('SCAN COMPLETE: No high-probability leads detected in this sector matrix.');
+        setError('SCAN COMPLETE: No leads matching your Boolean constraints.');
       } else {
         onResults(results, query);
       }
     } catch (err: any) {
-      setError(`SCAN FAILURE: ${err?.message || 'Data integrity violation during extraction.'}`);
+      setError(`SCAN FAILURE: Data extraction interrupted.`);
     } finally {
       onLoading(false);
       setIsProcessing(false);
@@ -94,107 +90,46 @@ export const ScannerUI: React.FC<ScannerUIProps> = ({ onResults, onLoading }) =>
         <div className="flex flex-col sm:flex-row justify-between items-start mb-12 gap-6">
           <div>
             <div className="flex items-center gap-4">
-              <div className="w-3 h-3 bg-blue-600 rounded-full animate-pulse shadow-[0_0_15px_#2563eb]" aria-hidden="true"></div>
-              <h2 id="interface-heading" className="text-2xl font-black text-white uppercase tracking-tighter">Command Interface</h2>
+              <div className="w-3 h-3 bg-blue-600 rounded-full animate-pulse shadow-[0_0_15px_#2563eb]"></div>
+              <h2 id="interface-heading" className="text-2xl font-black text-white uppercase tracking-tighter">Matrix Command</h2>
             </div>
-            <p className="text-[11px] text-zinc-700 uppercase tracking-[0.5em] mt-3 font-black">Active Session: {sessionId}</p>
+            <p className="text-[11px] text-zinc-700 uppercase tracking-[0.5em] mt-3 font-black">Secure Node: {sessionId}</p>
           </div>
           <div className="flex flex-col items-end gap-3">
             <div className="flex bg-black border border-zinc-800 rounded p-1">
-              <button 
-                onClick={() => setCurrency('NGN')}
-                className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all rounded ${currency === 'NGN' ? 'bg-blue-600 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
-              >
-                NGN
-              </button>
-              <button 
-                onClick={() => setCurrency('USD')}
-                className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all rounded ${currency === 'USD' ? 'bg-blue-600 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
-              >
-                USD
-              </button>
+              <button onClick={() => setCurrency('NGN')} className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded ${currency === 'NGN' ? 'bg-blue-600 text-white' : 'text-zinc-500'}`}>NGN</button>
+              <button onClick={() => setCurrency('USD')} className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded ${currency === 'USD' ? 'bg-blue-600 text-white' : 'text-zinc-500'}`}>USD</button>
             </div>
-            <div className="bg-blue-600/10 border-2 border-blue-600/20 px-6 py-3 rounded flex items-center gap-4 shadow-inner" role="status" aria-label="Current extraction price">
-              <i className="fas fa-credit-card text-blue-500 text-sm" aria-hidden="true"></i>
-              <span className="text-lg font-black text-white tracking-widest">
-                {currency === 'NGN' ? '₦4,899' : '$4.89'} 
-                <span className="text-[10px] text-zinc-600 font-black uppercase ml-2">/ Deep-Scan</span>
-              </span>
+            <div className="bg-blue-600/10 border-2 border-blue-600/20 px-6 py-3 rounded flex items-center gap-4">
+              <span className="text-lg font-black text-white">{currency === 'NGN' ? '₦4,899' : '$4.89'} <span className="text-[10px] text-zinc-600 uppercase">/ SCAN</span></span>
             </div>
           </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
           <div className="space-y-4">
-            <label htmlFor="industry-input" className="text-[11px] text-zinc-600 uppercase font-black tracking-[0.3em] flex items-center gap-3">
-              <i className="fas fa-search-location text-blue-600" aria-hidden="true"></i> Target Industry
-            </label>
-            <input 
-              id="industry-input"
-              type="text"
-              disabled={isProcessing}
-              placeholder="e.g. Fintech Startups"
-              aria-label="Target Industry Sector"
-              className="w-full bg-black border-2 border-zinc-900 p-5 rounded text-sm focus:border-blue-600 outline-none transition-all placeholder:text-zinc-800 text-white font-bold disabled:opacity-50"
-              value={query.category}
-              onChange={e => setQuery({ ...query, category: e.target.value })}
-            />
+            <label className="text-[10px] text-zinc-600 uppercase font-black tracking-widest">Target Sector</label>
+            <input type="text" placeholder="e.g. Solar Energy" className="w-full bg-black border-2 border-zinc-900 p-4 rounded text-sm text-white focus:border-blue-600 outline-none" value={query.category} onChange={e => setQuery({ ...query, category: e.target.value })} />
           </div>
           <div className="space-y-4">
-            <label htmlFor="territory-input" className="text-[11px] text-zinc-600 uppercase font-black tracking-[0.3em] flex items-center gap-3">
-              <i className="fas fa-globe-africa text-blue-600" aria-hidden="true"></i> Territory Focus
-            </label>
-            <input 
-              id="territory-input"
-              type="text"
-              disabled={isProcessing}
-              placeholder="e.g. Nairobi, Kenya"
-              aria-label="Target Geographical Territory"
-              className="w-full bg-black border-2 border-zinc-900 p-5 rounded text-sm focus:border-blue-600 outline-none transition-all placeholder:text-zinc-800 text-white font-bold disabled:opacity-50"
-              value={query.location}
-              onChange={e => setQuery({ ...query, location: e.target.value })}
-            />
+            <label className="text-[10px] text-zinc-600 uppercase font-black tracking-widest">Territory Focus</label>
+            <input type="text" placeholder="e.g. Lagos, Nigeria" className="w-full bg-black border-2 border-zinc-900 p-4 rounded text-sm text-white focus:border-blue-600 outline-none" value={query.location} onChange={e => setQuery({ ...query, location: e.target.value })} />
           </div>
         </div>
 
-        <div className="mt-10 flex items-center gap-4 bg-zinc-900/20 p-5 border border-zinc-900 rounded shadow-inner">
-          <input 
-            type="checkbox" 
-            id="tos" 
-            checked={agreedToTerms}
-            onChange={e => setAgreedToTerms(e.target.checked)}
-            className="w-5 h-5 accent-blue-600 bg-black border-zinc-800"
-          />
-          <label htmlFor="tos" className="text-[10px] text-zinc-600 uppercase tracking-[0.2em] cursor-pointer hover:text-zinc-400 transition-colors font-bold">
-            Acknowledge Enterprise Compliance & Mandatory {currency === 'NGN' ? '₦4,899' : '$4.89'} Authorization
+        <div className="space-y-4 mb-10">
+          <label className="text-[10px] text-zinc-600 uppercase font-black tracking-widest flex justify-between items-center">
+            Boolean Search Console
+            <span className="text-blue-500/50 normal-case font-medium italic">Example: (Tech OR SaaS) AND "Series A"</span>
           </label>
+          <input type="text" placeholder="Optional Boolean Logic (AND, OR, NOT, Quotes)" className="w-full bg-black border-2 border-zinc-900 p-4 rounded text-sm text-white focus:border-blue-600 outline-none font-mono" value={query.booleanLogic} onChange={e => setQuery({ ...query, booleanLogic: e.target.value })} />
         </div>
 
-        <button 
-          onClick={initiateSession}
-          disabled={isProcessing}
-          aria-busy={isProcessing}
-          className="mt-10 w-full bg-blue-600 hover:bg-blue-500 disabled:bg-zinc-900 text-white font-black py-6 px-10 rounded uppercase tracking-[0.5em] transition-all flex items-center justify-center gap-6 active:scale-[0.98] shadow-[0_20px_50px_rgba(37,99,235,0.3)] disabled:shadow-none group"
-        >
-          {isProcessing ? (
-            <><i className="fas fa-circle-notch animate-spin" aria-hidden="true"></i> Authorizing Node...</>
-          ) : (
-            <>
-              <i className="fas fa-key text-xs group-hover:rotate-45 transition-transform" aria-hidden="true"></i> 
-              Initiate Extraction Sequence
-            </>
-          )}
+        <button onClick={initiateSession} disabled={isProcessing} className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-zinc-900 text-white font-black py-6 rounded uppercase tracking-[0.5em] transition-all flex items-center justify-center gap-6 shadow-[0_20px_50px_rgba(37,99,235,0.3)]">
+          {isProcessing ? 'SCANNING DEEP WEB...' : 'EXECUTE EXTRACTION SEQUENCE'}
         </button>
 
-        {error && (
-          <div className="mt-8 p-6 bg-red-950/20 border-l-[6px] border-red-600 text-red-400 text-[11px] rounded-r-sm font-mono flex items-start gap-6 animate-shake shadow-2xl" role="alert">
-            <i className="fas fa-radiation mt-0.5 text-lg" aria-hidden="true"></i>
-            <div className="leading-relaxed">
-              <div className="font-black mb-1 uppercase tracking-widest text-red-500">Critical: Station Alert</div>
-              {error}
-            </div>
-          </div>
-        )}
+        {error && <div className="mt-6 p-4 bg-red-950/20 border-l-4 border-red-600 text-red-400 text-[10px] uppercase font-black tracking-widest animate-shake">{error}</div>}
       </div>
     </section>
   );

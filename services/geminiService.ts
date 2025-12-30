@@ -22,68 +22,62 @@ export async function scanBusinesses(query: ScanQuery): Promise<Business[]> {
       }
     };
   } catch (err) {
-    console.warn("Geolocation context unavailable. Proceeding with global search.");
+    console.warn("Geolocation context unavailable.");
   }
 
-  const systemInstruction = `You are the Occam Matrix Extraction Engine, a professional B2B lead generation tool. 
-Your task is to find high-value businesses registered on Google Maps based on a specific Sector and Territory.
+  const systemInstruction = `You are the Occam Matrix Boolean Extraction Engine (v3.0).
+Your task is to execute a High-Fidelity Deep Scan based on Boolean logic and territorial parameters.
 
-OUTPUT REQUIREMENTS:
-- Provide 10-15 high-fidelity leads.
-- Each lead MUST include: Name, Address, Phone, Website, and a Strategic Analysis (Description).
-- Use Google Maps to verify coordinates (LAT/LNG) and source links.
+OPERATIONAL PARAMETERS:
+- INTERPRET BOOLEAN LOGIC: Handle AND, OR, NOT, and quotes (e.g. "Real Estate").
+- SOURCE MULTI-CHANNEL DATA: Use Google Maps for spatial anchoring and Google Search for deep-web signals (Emails, Social IDs).
+- OUTPUT 10-15 VERIFIED LEADS.
+
+DATA SCHEMA PER LEAD:
+NAME: [Official Business Name]
+ADDRESS: [Full Physical Address]
+PHONE: [Contact Number]
+EMAIL: [Verified Corporate/Public Email or 'N/A']
+SOCIAL: [Primary Social ID/Handle (LinkedIn preferred)]
+CHANNEL: [Primary platform for outreach e.g. LinkedIn, Instagram, X]
+WEB: [Official URL]
+DESC: [2-sentence market intelligence summary]
+LAT/LNG: [Coordinates]
 
 STRICT FORMATTING:
-Wrap each lead in [[START]] and [[END]] tags.
-NAME: [Value]
-ADDRESS: [Value]
-PHONE: [Value]
-WEB: [Value]
-DESC: [Strategic 2-sentence market analysis]
-LAT: [Value]
-LNG: [Value]`;
+Wrap each lead in [[LEAD_START]] and [[LEAD_END]] tags.
+Use the keys: NAME, ADDRESS, PHONE, EMAIL, SOCIAL, CHANNEL, WEB, DESC, LAT, LNG.`;
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: `Extract leads for Sector: ${query.category} in Territory: ${query.location}`,
+      model: "gemini-3-pro-preview",
+      contents: `TARGET: ${query.category} 
+LOCATION: ${query.location}
+BOOLEAN CONSTRAINTS: ${query.booleanLogic || 'None'}`,
       config: {
         systemInstruction,
-        tools: [{ googleMaps: {} }],
+        tools: [{ googleMaps: {} }, { googleSearch: {} }],
         ...(toolConfig ? { toolConfig } : {}),
-        temperature: 0.1,
+        temperature: 0.2,
       },
     });
 
     const text = response.text || "";
-    const businesses = parseGeminiResponse(text);
-    
-    const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
-    return businesses.map(biz => {
-      const match = chunks.find(chunk => 
-        chunk.maps?.title && 
-        (biz.name.toLowerCase().includes(chunk.maps.title.toLowerCase()) || 
-         chunk.maps.title.toLowerCase().includes(biz.name.toLowerCase()))
-      );
-      return {
-        ...biz,
-        sourceUrl: match?.maps?.uri || biz.sourceUrl
-      };
-    });
+    return parseGeminiResponse(text);
   } catch (error) {
-    console.error("Extraction Failure:", error);
+    console.error("Matrix Extraction Failure:", error);
     throw error;
   }
 }
 
 function parseGeminiResponse(text: string): Business[] {
   const businesses: Business[] = [];
-  const rawBlocks = text.split(/\[\[START\]\]/i);
+  const rawBlocks = text.split(/\[\[LEAD_START\]\]/i);
   
   for (const block of rawBlocks) {
-    if (!block.includes('[[END]]')) continue;
+    if (!block.includes('[[LEAD_END]]')) continue;
     
-    const content = block.split(/\[\[END\]\]/i)[0].trim();
+    const content = block.split(/\[\[LEAD_END\]\]/i)[0].trim();
     const lines = content.split('\n');
     
     const getVal = (key: string) => {
@@ -99,6 +93,9 @@ function parseGeminiResponse(text: string): Business[] {
       name: name,
       address: getVal('ADDRESS'),
       phone: getVal('PHONE'),
+      email: getVal('EMAIL'),
+      socialId: getVal('SOCIAL'),
+      channel: getVal('CHANNEL'),
       website: getVal('WEB'),
       description: getVal('DESC'),
       latitude: parseFloat(getVal('LAT')) || 0,
