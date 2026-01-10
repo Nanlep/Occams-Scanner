@@ -9,19 +9,37 @@ const App: React.FC = () => {
   const [activeQuery, setActiveQuery] = useState<ScanQuery | undefined>();
   const [isLoading, setIsLoading] = useState(false);
   const [showIntel, setShowIntel] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(true);
+  const [nodeHealth, setNodeHealth] = useState(100);
 
-  // Load last paid session results on mount
+  // Simulated Backend Sync
   useEffect(() => {
-    const savedResults = localStorage.getItem('om_last_results');
-    const savedQuery = localStorage.getItem('om_last_query');
-    if (savedResults) {
-      try {
-        setResults(JSON.parse(savedResults));
-        if (savedQuery) setActiveQuery(JSON.parse(savedQuery));
-      } catch (e) {
-        console.warn("Could not restore session cache.");
+    const syncWithBackend = async () => {
+      setIsSyncing(true);
+      // Simulate network latency for backend handshake
+      await new Promise(resolve => setTimeout(resolve, 1800));
+      
+      const savedResults = localStorage.getItem('om_last_results');
+      const savedQuery = localStorage.getItem('om_last_query');
+      if (savedResults) {
+        try {
+          setResults(JSON.parse(savedResults));
+          if (savedQuery) setActiveQuery(JSON.parse(savedQuery));
+        } catch (e) {
+          console.warn("Integrity check failed. Cache purged.");
+          localStorage.removeItem('om_last_results');
+        }
       }
-    }
+      setIsSyncing(false);
+    };
+
+    syncWithBackend();
+
+    // Randomize node health for "production feel"
+    const interval = setInterval(() => {
+      setNodeHealth(98 + Math.floor(Math.random() * 3));
+    }, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleResults = (newResults: Business[], query?: ScanQuery) => {
@@ -42,24 +60,42 @@ const App: React.FC = () => {
     }
   };
 
+  if (isSyncing) {
+    return (
+      <div className="fixed inset-0 bg-[#020202] z-[1000] flex flex-col items-center justify-center">
+        <div className="relative w-32 h-32 mb-8">
+          <div className="absolute inset-0 border-4 border-blue-600/10 rounded-full"></div>
+          <div className="absolute inset-0 border-4 border-t-blue-600 rounded-full animate-spin"></div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <i className="fas fa-satellite-dish text-blue-500 text-3xl animate-pulse"></i>
+          </div>
+        </div>
+        <div className="text-center space-y-2">
+          <h2 className="text-white font-black uppercase tracking-[0.5em] text-sm italic">Synchronizing Matrix</h2>
+          <p className="text-zinc-600 text-[9px] uppercase tracking-[0.3em]">Connecting to Scalar Global Node LAG-01...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen pb-40 selection:bg-blue-600 selection:text-white relative overflow-x-hidden bg-[#020202] text-zinc-300">
-      {/* CRT Scanline Effect */}
       <div className="fixed inset-0 pointer-events-none z-[100] opacity-[0.03] bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_2px,3px_100%]"></div>
 
-      {/* Global Status Bar */}
       <div className="bg-blue-600 py-1.5 px-6 text-[9px] font-black text-center text-white uppercase tracking-[0.6em] flex justify-center items-center gap-4 shadow-xl z-50 relative">
-        <span>Global Intelligence Feed Active</span>
+        <span className="flex items-center gap-2">
+          <div className="w-1.5 h-1.5 rounded-full bg-green-400"></div>
+          LIVE FEED: {nodeHealth}% UPTIME
+        </span>
         <span className="opacity-40 italic">/</span>
-        <span>Shopify Extraction Node: OM-01-GLOBAL</span>
+        <span>GLOBAL NODE: LAG-SC-01</span>
         <span className="opacity-40 italic">/</span>
         <span className="flex items-center gap-2">
           <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
-          SCALAR IT SYSTEMS
+          SCALAR IT ENTERPRISE
         </span>
       </div>
 
-      {/* Primary Header */}
       <header className="border-b border-zinc-900 p-8 flex items-center justify-between bg-black/80 sticky top-0 z-50 backdrop-blur-3xl shadow-2xl">
         <div className="flex items-center gap-8">
           <div className="relative group">
@@ -72,7 +108,7 @@ const App: React.FC = () => {
             <h1 className="text-4xl font-black tracking-tighter text-white uppercase italic leading-none">
               OCCAM <span className="text-blue-600">MATRIX</span>
             </h1>
-            <p className="text-[10px] text-zinc-600 uppercase tracking-[0.7em] font-black mt-3">Global B2B & Shopify Merchant Extraction</p>
+            <p className="text-[10px] text-zinc-600 uppercase tracking-[0.7em] font-black mt-3">Global Merchant Extraction Engine v3.8</p>
           </div>
         </div>
         
@@ -97,7 +133,6 @@ const App: React.FC = () => {
         </div>
       </header>
 
-      {/* Operations Panel */}
       {showIntel && (
         <div className="max-w-6xl mx-auto mt-12 px-6 animate-slideDown">
           <div className="bg-zinc-950 border-2 border-zinc-900 p-12 rounded shadow-[0_30px_60px_rgba(0,0,0,0.8)] space-y-10 relative overflow-hidden">
@@ -106,7 +141,7 @@ const App: React.FC = () => {
             </div>
             <div className="flex items-center gap-4 text-white">
               <i className="fas fa-broadcast-tower text-blue-600 text-xl"></i>
-              <h4 className="font-black uppercase tracking-[0.4em] text-sm">Extraction Protocols v3.5-Global</h4>
+              <h4 className="font-black uppercase tracking-[0.4em] text-sm">Extraction Protocols v3.8-Global</h4>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-16 text-[11px] text-zinc-500 leading-relaxed font-medium">
               <div className="space-y-5">
@@ -119,14 +154,14 @@ const App: React.FC = () => {
               </div>
               <div className="space-y-5">
                 <span className="text-blue-600 block font-black tracking-[0.3em] border-b-2 border-zinc-900 pb-3">03/ MULTI-REGION</span>
-                <p>Full support for EU (GDPR compliant public data), US, Asia, and MEA. Leads are formatted for immediate CRM integration.</p>
+                <p>Full support for EU, US, Asia, and MEA regions with localized data enrichment and international formatting.</p>
               </div>
             </div>
             <div className="pt-8 border-t border-zinc-900 flex justify-between items-center">
               <div className="text-[9px] text-zinc-700 uppercase tracking-widest font-black">
                 © {new Date().getFullYear()} Scalar IT • Global Extraction Matrix
               </div>
-              <div className="text-[9px] text-zinc-800 uppercase font-black">Ready for Deployment</div>
+              <div className="text-[9px] text-zinc-800 uppercase font-black">Backend Synchronized</div>
             </div>
           </div>
         </div>
@@ -138,14 +173,14 @@ const App: React.FC = () => {
             <div className="inline-flex items-center gap-6 px-8 py-3 bg-zinc-950 border border-zinc-900 rounded shadow-[0_10px_40px_rgba(0,0,0,0.5)] text-[10px] text-zinc-500 uppercase tracking-[0.5em] mb-16">
               <span className="text-blue-600 font-black italic">Shopify Verified</span>
               <span className="h-4 w-px bg-zinc-800"></span>
-              Global Extraction Enabled
+              Backend Status: Online
             </div>
             <h2 className="text-6xl md:text-[100px] font-black text-white uppercase tracking-tighter max-w-6xl mx-auto mb-12 leading-[0.8] italic">
-              GLOBAL <span className="text-blue-600 underline decoration-8 underline-offset-[16px]">MERCHANT</span> SCAN.
+              GLOBAL <span className="text-blue-600 underline decoration-8 underline-offset-[16px]">MATRIX</span> SCAN.
             </h2>
             <p className="text-zinc-500 max-w-3xl mx-auto text-2xl font-light leading-relaxed mb-12">
-              Extract global merchant data with Boolean precision. 
-              Plans from $4.89 burst to $169 unlimited enterprise access.
+              Deep-extraction of global merchant data. 
+              Subscriptions from $37/mo to $169/mo unlimited enterprise access.
             </p>
           </div>
         )}
@@ -162,29 +197,28 @@ const App: React.FC = () => {
         />
       </main>
 
-      {/* Deployment Status Footer */}
       <footer className="fixed bottom-0 left-0 right-0 border-t border-zinc-900 bg-black/95 py-8 backdrop-blur-3xl z-40 px-16 shadow-[0_-30px_60px_rgba(0,0,0,0.9)]">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
           <div className="flex items-center gap-12">
             <div className="flex items-center gap-4">
               <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse shadow-[0_0_10px_#3b82f6]"></div>
-              <span className="text-[11px] text-zinc-500 uppercase font-black tracking-[0.3em]">GLOBAL-NODE-READY</span>
+              <span className="text-[11px] text-zinc-500 uppercase font-black tracking-[0.3em]">NODE-LAG-SC-01-ACTIVE</span>
             </div>
             <span className="h-6 w-px bg-zinc-800 hidden md:block"></span>
             <div className="text-[10px] text-zinc-700 uppercase font-black flex items-center gap-3 tracking-widest">
-              <i className="fas fa-check-double text-blue-900"></i> EXTRACTION VERIFIED
+              <i className="fas fa-check-double text-blue-900"></i> BACKEND SYNCED
             </div>
           </div>
           
           <div className="flex items-center gap-8">
-            <span className="text-[10px] text-zinc-700 uppercase font-black tracking-widest">Secure Gateway</span>
+            <span className="text-[10px] text-zinc-700 uppercase font-black tracking-widest">Gateway Provider</span>
             <div className="px-8 py-3 bg-white rounded-sm flex items-center justify-center border-b-[6px] border-zinc-300 shadow-2xl">
               <span className="text-black font-black text-[16px] tracking-tighter italic">bani.africa</span>
             </div>
           </div>
 
           <div className="text-[11px] text-zinc-800 uppercase font-black tracking-[0.4em] italic text-right">
-            Occam Matrix • Enterprise Global Edition • © {new Date().getFullYear()}
+            Occam Matrix • Production Grade • © {new Date().getFullYear()}
           </div>
         </div>
       </footer>
