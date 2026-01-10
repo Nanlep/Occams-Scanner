@@ -34,7 +34,7 @@ const App: React.FC = () => {
   };
 
   const clearSession = () => {
-    if (window.confirm("ARE YOU SURE? This will purge the current lead manifest from local cache.")) {
+    if (window.confirm("PURGE MANIFEST? All local lead data will be deleted.")) {
       setResults([]);
       setActiveQuery(undefined);
       localStorage.removeItem('om_last_results');
@@ -49,9 +49,9 @@ const App: React.FC = () => {
 
       {/* Global Status Bar */}
       <div className="bg-blue-600 py-1.5 px-6 text-[9px] font-black text-center text-white uppercase tracking-[0.6em] flex justify-center items-center gap-4 shadow-xl z-50 relative">
-        <span>Grounded Intelligence Active</span>
+        <span>Global Intelligence Feed Active</span>
         <span className="opacity-40 italic">/</span>
-        <span>Secure B2B Extraction Node: OM-01</span>
+        <span>Shopify Extraction Node: OM-01-GLOBAL</span>
         <span className="opacity-40 italic">/</span>
         <span className="flex items-center gap-2">
           <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
@@ -65,14 +65,14 @@ const App: React.FC = () => {
           <div className="relative group">
             <div className="absolute inset-0 bg-blue-500 blur-xl opacity-20 group-hover:opacity-40 transition-opacity"></div>
             <div className="w-14 h-14 border-2 border-blue-600 rounded flex items-center justify-center text-blue-500 bg-black relative shadow-2xl">
-               <i className="fas fa-bullseye text-2xl"></i>
+               <i className="fas fa-globe text-2xl animate-spin-slow" style={{ animationDuration: '10s' }}></i>
             </div>
           </div>
           <div className="text-left border-l-2 border-zinc-800 pl-8">
             <h1 className="text-4xl font-black tracking-tighter text-white uppercase italic leading-none">
               OCCAM <span className="text-blue-600">MATRIX</span>
             </h1>
-            <p className="text-[10px] text-zinc-600 uppercase tracking-[0.7em] font-black mt-3">High-Velocity Lead Extraction Engine</p>
+            <p className="text-[10px] text-zinc-600 uppercase tracking-[0.7em] font-black mt-3">Global B2B & Shopify Merchant Extraction</p>
           </div>
         </div>
         
@@ -82,7 +82,7 @@ const App: React.FC = () => {
               onClick={clearSession}
               className="text-[9px] text-zinc-600 hover:text-red-500 uppercase font-black tracking-widest transition-colors flex items-center gap-2"
             >
-              <i className="fas fa-trash-alt"></i> Purge Manifest
+              <i className="fas fa-trash-alt"></i> Purge Cache
             </button>
           )}
           <button 
@@ -90,8 +90,8 @@ const App: React.FC = () => {
             className="group px-8 py-3 rounded border-2 border-zinc-900 bg-zinc-950 hover:border-zinc-700 transition-all shadow-xl"
           >
             <span className="text-[10px] text-zinc-400 font-black uppercase tracking-[0.3em] flex items-center gap-3">
-              {showIntel ? <i className="fas fa-times text-blue-500"></i> : <i className="fas fa-terminal text-blue-500"></i>}
-              {showIntel ? 'Hide Intel' : 'Operations Intel'}
+              {showIntel ? <i className="fas fa-times text-blue-500"></i> : <i className="fas fa-info-circle text-blue-500"></i>}
+              {showIntel ? 'Hide Intel' : 'Global protocols'}
             </span>
           </button>
         </div>
@@ -102,31 +102,31 @@ const App: React.FC = () => {
         <div className="max-w-6xl mx-auto mt-12 px-6 animate-slideDown">
           <div className="bg-zinc-950 border-2 border-zinc-900 p-12 rounded shadow-[0_30px_60px_rgba(0,0,0,0.8)] space-y-10 relative overflow-hidden">
             <div className="absolute top-0 right-0 p-8 opacity-10">
-              <i className="fas fa-microchip text-[120px] text-blue-600"></i>
+              <i className="fas fa-rocket text-[120px] text-blue-600"></i>
             </div>
             <div className="flex items-center gap-4 text-white">
-              <i className="fas fa-shield-virus text-blue-600 text-xl"></i>
-              <h4 className="font-black uppercase tracking-[0.4em] text-sm">Deployment Protocols v2.8</h4>
+              <i className="fas fa-broadcast-tower text-blue-600 text-xl"></i>
+              <h4 className="font-black uppercase tracking-[0.4em] text-sm">Extraction Protocols v3.5-Global</h4>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-16 text-[11px] text-zinc-500 leading-relaxed font-medium">
               <div className="space-y-5">
-                <span className="text-blue-600 block font-black tracking-[0.3em] border-b-2 border-zinc-900 pb-3">01/ GROUNDING</span>
-                <p>Occam utilizes Gemini 2.5's spatial grounding to anchor business data directly to verified Google Maps nodes. Precision is verified at sub-meter levels.</p>
+                <span className="text-blue-600 block font-black tracking-[0.3em] border-b-2 border-zinc-900 pb-3">01/ SHOPIFY DETECTION</span>
+                <p>The matrix scans for myshopify.com DNS signatures and Liquid template markers to identify verified Shopify merchants globally.</p>
               </div>
               <div className="space-y-5">
-                <span className="text-blue-600 block font-black tracking-[0.3em] border-b-2 border-zinc-900 pb-3">02/ PERSISTENCE</span>
-                <p>Paid manifests are encrypted and cached locally. Your data remains accessible even across sessions until manually purged from the header command.</p>
+                <span className="text-blue-600 block font-black tracking-[0.3em] border-b-2 border-zinc-900 pb-3">02/ CONTACT MINING</span>
+                <p>Advanced Boolean crawlers navigate deep-web layers to extract verified corporate emails, social handles, and marketing channels for every lead.</p>
               </div>
               <div className="space-y-5">
-                <span className="text-blue-600 block font-black tracking-[0.3em] border-b-2 border-zinc-900 pb-3">03/ SCORING</span>
-                <p>Lead Quality is determined by data density. 100% scores indicate verified digital presence, contact vectors, and map anchoring.</p>
+                <span className="text-blue-600 block font-black tracking-[0.3em] border-b-2 border-zinc-900 pb-3">03/ MULTI-REGION</span>
+                <p>Full support for EU (GDPR compliant public data), US, Asia, and MEA. Leads are formatted for immediate CRM integration.</p>
               </div>
             </div>
             <div className="pt-8 border-t border-zinc-900 flex justify-between items-center">
               <div className="text-[9px] text-zinc-700 uppercase tracking-widest font-black">
-                © {new Date().getFullYear()} Scalar IT • Proprietary Matrix Engine
+                © {new Date().getFullYear()} Scalar IT • Global Extraction Matrix
               </div>
-              <div className="text-[9px] text-zinc-800 uppercase font-black">Version: 2.8.4-RELEASE</div>
+              <div className="text-[9px] text-zinc-800 uppercase font-black">Ready for Deployment</div>
             </div>
           </div>
         </div>
@@ -136,16 +136,16 @@ const App: React.FC = () => {
         {!results.length && !isLoading && (
           <div className="text-center px-6 animate-fadeIn">
             <div className="inline-flex items-center gap-6 px-8 py-3 bg-zinc-950 border border-zinc-900 rounded shadow-[0_10px_40px_rgba(0,0,0,0.5)] text-[10px] text-zinc-500 uppercase tracking-[0.5em] mb-16">
-              <span className="text-blue-600 font-black italic">Enterprise Licensed</span>
+              <span className="text-blue-600 font-black italic">Shopify Verified</span>
               <span className="h-4 w-px bg-zinc-800"></span>
-              Secure Geolocation Feed Active
+              Global Extraction Enabled
             </div>
             <h2 className="text-6xl md:text-[100px] font-black text-white uppercase tracking-tighter max-w-6xl mx-auto mb-12 leading-[0.8] italic">
-              COMMAND THE <span className="text-blue-600 underline decoration-8 underline-offset-[16px]">B2B MATRIX</span>.
+              GLOBAL <span className="text-blue-600 underline decoration-8 underline-offset-[16px]">MERCHANT</span> SCAN.
             </h2>
             <p className="text-zinc-500 max-w-3xl mx-auto text-2xl font-light leading-relaxed mb-12">
-              Deep-scan any territory. Extract high-fidelity business records. 
-              Populate your sales pipeline with ₦4,899 or $4.89 session efficiency.
+              Extract global merchant data with Boolean precision. 
+              Plans from $4.89 burst to $169 unlimited enterprise access.
             </p>
           </div>
         )}
@@ -167,24 +167,24 @@ const App: React.FC = () => {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
           <div className="flex items-center gap-12">
             <div className="flex items-center gap-4">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_10px_#22c55e]"></div>
-              <span className="text-[11px] text-zinc-500 uppercase font-black tracking-[0.3em]">GCP-LAG-NODE-STABLE</span>
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse shadow-[0_0_10px_#3b82f6]"></div>
+              <span className="text-[11px] text-zinc-500 uppercase font-black tracking-[0.3em]">GLOBAL-NODE-READY</span>
             </div>
             <span className="h-6 w-px bg-zinc-800 hidden md:block"></span>
             <div className="text-[10px] text-zinc-700 uppercase font-black flex items-center gap-3 tracking-widest">
-              <i className="fas fa-shield-check text-blue-900"></i> ISO-MATRIX COMPLIANT
+              <i className="fas fa-check-double text-blue-900"></i> EXTRACTION VERIFIED
             </div>
           </div>
           
           <div className="flex items-center gap-8">
-            <span className="text-[10px] text-zinc-700 uppercase font-black tracking-widest">Clearing Gateway</span>
+            <span className="text-[10px] text-zinc-700 uppercase font-black tracking-widest">Secure Gateway</span>
             <div className="px-8 py-3 bg-white rounded-sm flex items-center justify-center border-b-[6px] border-zinc-300 shadow-2xl">
               <span className="text-black font-black text-[16px] tracking-tighter italic">bani.africa</span>
             </div>
           </div>
 
           <div className="text-[11px] text-zinc-800 uppercase font-black tracking-[0.4em] italic text-right">
-            Occam Matrix • Scalar IT Product • © {new Date().getFullYear()}
+            Occam Matrix • Enterprise Global Edition • © {new Date().getFullYear()}
           </div>
         </div>
       </footer>

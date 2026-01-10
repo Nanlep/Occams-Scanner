@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { ScanQuery, Business } from '../types';
+import { ScanQuery, Business, Tier } from '../types';
 import { scanBusinesses } from '../services/geminiService';
 
 interface ScannerUIProps {
@@ -10,36 +10,55 @@ interface ScannerUIProps {
 
 declare const BaniPopUp: any;
 
+const PRICING = {
+  SINGLE: { usd: 4.89, ngn: 4899, label: 'Single Burst' },
+  PRO: { usd: 37, ngn: 37000, label: 'Pro Node' }, // approx conversion for NGN
+  ENTERPRISE: { usd: 169, ngn: 169000, label: 'Enterprise Matrix' }
+};
+
 export const ScannerUI: React.FC<ScannerUIProps> = ({ onResults, onLoading }) => {
   const [query, setQuery] = useState<ScanQuery>({ category: '', location: '', booleanLogic: '' });
   const [currency, setCurrency] = useState<'USD' | 'NGN'>('NGN');
+  const [activeTier, setActiveTier] = useState<Tier>('SINGLE');
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(true);
   const [sessionId, setSessionId] = useState('');
+  
+  // Simulated subscription state for demo (In production, this comes from a backend)
+  const [authorizedTier, setAuthorizedTier] = useState<Tier | null>(null);
 
   useEffect(() => {
     setSessionId(`OM-${Math.random().toString(36).substring(2, 9).toUpperCase()}`);
+    // Check local storage for persistent authorization
+    const savedAuth = localStorage.getItem('om_auth_tier');
+    if (savedAuth) setAuthorizedTier(savedAuth as Tier);
   }, []);
 
   const initiateSession = () => {
     setError(null);
     if (!query.category || !query.location) {
-      setError('VALIDATION ERROR: Target Sector and Territory coordinates are required.');
+      setError('VALIDATION ERROR: Target Sector/Platform and Territory are required.');
       return;
     }
     if (!agreedToTerms) {
-      setError('COMPLIANCE ERROR: You must acknowledge the Data Usage Agreement.');
+      setError('COMPLIANCE ERROR: Acknowledge Data Usage Agreement.');
+      return;
+    }
+
+    // If user is already authorized for this tier (or higher), skip payment
+    if (authorizedTier === 'ENTERPRISE' || (authorizedTier === 'PRO' && activeTier !== 'ENTERPRISE')) {
+      executeDeepScan();
       return;
     }
 
     setIsProcessing(true);
     const merchantKey = "YOUR_BANI_MERCHANT_KEY"; 
-    const amount = currency === 'NGN' ? 4899 : 4.89;
+    const amount = currency === 'NGN' ? PRICING[activeTier].ngn : PRICING[activeTier].usd;
 
     try {
       if (typeof BaniPopUp === 'undefined') {
-        throw new Error('Payment Bridge failed to load. Check connection.');
+        throw new Error('Payment Bridge (Bani) script failed. Ensure connectivity.');
       }
 
       BaniPopUp({
@@ -47,13 +66,17 @@ export const ScannerUI: React.FC<ScannerUIProps> = ({ onResults, onLoading }) =>
         phoneNumber: "",
         email: "",
         merchantKey: merchantKey,
-        ref: sessionId,
+        ref: `${sessionId}-${activeTier}`,
         onClose: () => setIsProcessing(false),
         callback: (response: any) => {
           if (response && (response.status === "success" || response.message === "Successful")) {
+            if (activeTier !== 'SINGLE') {
+              setAuthorizedTier(activeTier);
+              localStorage.setItem('om_auth_tier', activeTier);
+            }
             executeDeepScan();
           } else {
-            setError('PAYMENT ALERT: Authorization failed.');
+            setError('PAYMENT ALERT: Authorization failed or cancelled.');
             setIsProcessing(false);
           }
         }
@@ -70,12 +93,12 @@ export const ScannerUI: React.FC<ScannerUIProps> = ({ onResults, onLoading }) =>
     try {
       const results = await scanBusinesses(query);
       if (results.length === 0) {
-        setError('SCAN COMPLETE: No leads matching your Boolean constraints.');
+        setError('SCAN COMPLETE: No leads found matching these global parameters.');
       } else {
         onResults(results, query);
       }
     } catch (err: any) {
-      setError(`SCAN FAILURE: Data extraction interrupted.`);
+      setError(`SCAN FAILURE: Global extraction node timed out.`);
     } finally {
       onLoading(false);
       setIsProcessing(false);
@@ -83,7 +106,49 @@ export const ScannerUI: React.FC<ScannerUIProps> = ({ onResults, onLoading }) =>
   };
 
   return (
-    <section className="w-full max-w-4xl mx-auto p-6" aria-labelledby="interface-heading">
+    <section className="w-full max-w-6xl mx-auto p-6 space-y-12" aria-labelledby="interface-heading">
+      
+      {/* Tier Selection Matrix */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        {(['SINGLE', 'PRO', 'ENTERPRISE'] as Tier[]).map((tier) => (
+          <button
+            key={tier}
+            onClick={() => setActiveTier(tier)}
+            className={`relative p-8 rounded-sm border-2 transition-all text-left overflow-hidden group ${
+              activeTier === tier 
+                ? 'bg-blue-600/5 border-blue-600 shadow-[0_0_30px_rgba(37,99,235,0.2)]' 
+                : 'bg-zinc-950 border-zinc-900 hover:border-zinc-700'
+            }`}
+          >
+            {activeTier === tier && <div className="scan-line !h-[1px] opacity-20"></div>}
+            <div className="flex justify-between items-start mb-6">
+              <span className={`text-[10px] font-black uppercase tracking-[0.3em] ${activeTier === tier ? 'text-blue-500' : 'text-zinc-500'}`}>
+                {PRICING[tier].label}
+              </span>
+              {authorizedTier === tier && (
+                <span className="bg-green-500/10 text-green-500 text-[8px] px-2 py-0.5 rounded border border-green-500/20 font-black uppercase">Active</span>
+              )}
+            </div>
+            <div className="text-3xl font-black text-white italic mb-2">
+              {currency === 'NGN' ? '₦' : '$'}{currency === 'NGN' ? PRICING[tier].ngn.toLocaleString() : PRICING[tier].usd}
+              <span className="text-[10px] text-zinc-600 not-italic ml-2 font-bold">{tier === 'SINGLE' ? '/ burst' : '/ month'}</span>
+            </div>
+            <ul className="text-[9px] text-zinc-500 space-y-2 uppercase font-black tracking-widest mt-6">
+              <li className="flex items-center gap-2">
+                <i className={`fas ${tier === 'SINGLE' ? 'fa-minus' : 'fa-check'} text-blue-500`}></i>
+                {tier === 'SINGLE' ? '15 Leads / Session' : tier === 'PRO' ? '15 Sessions / Mo' : 'Unlimited Sessions'}
+              </li>
+              <li className="flex items-center gap-2">
+                <i className="fas fa-check text-blue-500"></i> Global Reach
+              </li>
+              <li className="flex items-center gap-2">
+                <i className="fas fa-check text-blue-500"></i> Boolean Logic
+              </li>
+            </ul>
+          </button>
+        ))}
+      </div>
+
       <div className="bg-zinc-950 border-2 border-zinc-900 p-10 rounded shadow-[0_40px_100px_rgba(0,0,0,0.6)] relative overflow-hidden">
         <div className="scan-line opacity-10"></div>
         
@@ -91,42 +156,66 @@ export const ScannerUI: React.FC<ScannerUIProps> = ({ onResults, onLoading }) =>
           <div>
             <div className="flex items-center gap-4">
               <div className="w-3 h-3 bg-blue-600 rounded-full animate-pulse shadow-[0_0_15px_#2563eb]"></div>
-              <h2 id="interface-heading" className="text-2xl font-black text-white uppercase tracking-tighter">Matrix Command</h2>
+              <h2 id="interface-heading" className="text-2xl font-black text-white uppercase tracking-tighter">Extraction Command</h2>
             </div>
-            <p className="text-[11px] text-zinc-700 uppercase tracking-[0.5em] mt-3 font-black">Secure Node: {sessionId}</p>
+            <p className="text-[11px] text-zinc-700 uppercase tracking-[0.5em] mt-3 font-black">Session: {sessionId} // {PRICING[activeTier].label}</p>
           </div>
           <div className="flex flex-col items-end gap-3">
             <div className="flex bg-black border border-zinc-800 rounded p-1">
               <button onClick={() => setCurrency('NGN')} className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded ${currency === 'NGN' ? 'bg-blue-600 text-white' : 'text-zinc-500'}`}>NGN</button>
               <button onClick={() => setCurrency('USD')} className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded ${currency === 'USD' ? 'bg-blue-600 text-white' : 'text-zinc-500'}`}>USD</button>
             </div>
-            <div className="bg-blue-600/10 border-2 border-blue-600/20 px-6 py-3 rounded flex items-center gap-4">
-              <span className="text-lg font-black text-white">{currency === 'NGN' ? '₦4,899' : '$4.89'} <span className="text-[10px] text-zinc-600 uppercase">/ SCAN</span></span>
-            </div>
           </div>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
           <div className="space-y-4">
-            <label className="text-[10px] text-zinc-600 uppercase font-black tracking-widest">Target Sector</label>
-            <input type="text" placeholder="e.g. Solar Energy" className="w-full bg-black border-2 border-zinc-900 p-4 rounded text-sm text-white focus:border-blue-600 outline-none" value={query.category} onChange={e => setQuery({ ...query, category: e.target.value })} />
+            <label className="text-[10px] text-zinc-600 uppercase font-black tracking-widest flex items-center gap-2">
+              <i className="fas fa-store text-blue-500"></i> Platform / Sector
+            </label>
+            <input type="text" placeholder="e.g. Shopify Fashion Merchants" className="w-full bg-black border-2 border-zinc-900 p-4 rounded text-sm text-white focus:border-blue-600 outline-none" value={query.category} onChange={e => setQuery({ ...query, category: e.target.value })} />
           </div>
           <div className="space-y-4">
-            <label className="text-[10px] text-zinc-600 uppercase font-black tracking-widest">Territory Focus</label>
-            <input type="text" placeholder="e.g. Lagos, Nigeria" className="w-full bg-black border-2 border-zinc-900 p-4 rounded text-sm text-white focus:border-blue-600 outline-none" value={query.location} onChange={e => setQuery({ ...query, location: e.target.value })} />
+            <label className="text-[10px] text-zinc-600 uppercase font-black tracking-widest flex items-center gap-2">
+              <i className="fas fa-globe-americas text-blue-500"></i> Global Territory
+            </label>
+            <input type="text" placeholder="e.g. USA, UK, UAE, or Kenya" className="w-full bg-black border-2 border-zinc-900 p-4 rounded text-sm text-white focus:border-blue-600 outline-none" value={query.location} onChange={e => setQuery({ ...query, location: e.target.value })} />
           </div>
         </div>
 
         <div className="space-y-4 mb-10">
           <label className="text-[10px] text-zinc-600 uppercase font-black tracking-widest flex justify-between items-center">
-            Boolean Search Console
-            <span className="text-blue-500/50 normal-case font-medium italic">Example: (Tech OR SaaS) AND "Series A"</span>
+            Boolean Filter Logic
+            <span className="text-blue-500/50 normal-case font-medium italic">Syntax: (SaaS OR Tech) AND "Europe"</span>
           </label>
-          <input type="text" placeholder="Optional Boolean Logic (AND, OR, NOT, Quotes)" className="w-full bg-black border-2 border-zinc-900 p-4 rounded text-sm text-white focus:border-blue-600 outline-none font-mono" value={query.booleanLogic} onChange={e => setQuery({ ...query, booleanLogic: e.target.value })} />
+          <input type="text" placeholder="Advanced Boolean Logic (Optional)" className="w-full bg-black border-2 border-zinc-900 p-4 rounded text-sm text-white focus:border-blue-600 outline-none font-mono" value={query.booleanLogic} onChange={e => setQuery({ ...query, booleanLogic: e.target.value })} />
+        </div>
+
+        <div className="mb-10 flex items-center gap-4 bg-zinc-900/20 p-5 border border-zinc-900 rounded">
+          <input 
+            type="checkbox" 
+            id="tos" 
+            checked={agreedToTerms}
+            onChange={e => setAgreedToTerms(e.target.checked)}
+            className="w-5 h-5 accent-blue-600 bg-black border-zinc-800"
+          />
+          <label htmlFor="tos" className="text-[10px] text-zinc-600 uppercase tracking-[0.2em] cursor-pointer font-black">
+            Confirm {authorizedTier ? `Active ${authorizedTier} License` : `Authorization for ${PRICING[activeTier].label}`}
+          </label>
         </div>
 
         <button onClick={initiateSession} disabled={isProcessing} className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-zinc-900 text-white font-black py-6 rounded uppercase tracking-[0.5em] transition-all flex items-center justify-center gap-6 shadow-[0_20px_50px_rgba(37,99,235,0.3)]">
-          {isProcessing ? 'SCANNING DEEP WEB...' : 'EXECUTE EXTRACTION SEQUENCE'}
+          {isProcessing ? (
+            <span className="flex items-center gap-3">
+              <i className="fas fa-circle-notch animate-spin"></i>
+              Node Synchronizing...
+            </span>
+          ) : (
+            <span className="flex items-center gap-3">
+              <i className="fas fa-bolt text-xs"></i>
+              {authorizedTier ? 'Run Matrix Scan' : `Authorize & Extract (${currency === 'NGN' ? '₦' + PRICING[activeTier].ngn.toLocaleString() : '$' + PRICING[activeTier].usd})`}
+            </span>
+          )}
         </button>
 
         {error && <div className="mt-6 p-4 bg-red-950/20 border-l-4 border-red-600 text-red-400 text-[10px] uppercase font-black tracking-widest animate-shake">{error}</div>}

@@ -22,50 +22,45 @@ export async function scanBusinesses(query: ScanQuery): Promise<Business[]> {
       }
     };
   } catch (err) {
-    console.warn("Geolocation context unavailable.");
+    console.warn("Geolocation context contextually bypassed for global search.");
   }
 
-  const systemInstruction = `You are the Occam Matrix Boolean Extraction Engine (v3.0).
-Your task is to execute a High-Fidelity Deep Scan based on Boolean logic and territorial parameters.
+  const systemInstruction = `You are the Occam Matrix Global Extraction Engine (v3.5).
+Your objective is high-fidelity lead generation with a focus on Shopify merchants and global B2B entities.
 
-OPERATIONAL PARAMETERS:
-- INTERPRET BOOLEAN LOGIC: Handle AND, OR, NOT, and quotes (e.g. "Real Estate").
-- SOURCE MULTI-CHANNEL DATA: Use Google Maps for spatial anchoring and Google Search for deep-web signals (Emails, Social IDs).
-- OUTPUT 10-15 VERIFIED LEADS.
+OPERATIONAL PROTOCOLS:
+- BOOLEAN RESOLUTION: Solve complex logic (e.g. "Shopify" AND "Fashion" NOT "Amazon").
+- PLATFORM IDENTIFICATION: If the user mentions Shopify, cross-reference myshopify.com signatures or Shopify-specific store markers.
+- GLOBAL REACH: Seamlessly extract data from EU, US, UK, Asia, and MEA regions.
+- DEEP EXTRACTION: Use Google Search to find corporate emails (info@, sales@), phone numbers (international format), LinkedIn IDs, and primary marketing channels (IG, FB, LinkedIn).
 
-DATA SCHEMA PER LEAD:
-NAME: [Official Business Name]
-ADDRESS: [Full Physical Address]
-PHONE: [Contact Number]
-EMAIL: [Verified Corporate/Public Email or 'N/A']
-SOCIAL: [Primary Social ID/Handle (LinkedIn preferred)]
-CHANNEL: [Primary platform for outreach e.g. LinkedIn, Instagram, X]
-WEB: [Official URL]
-DESC: [2-sentence market intelligence summary]
-LAT/LNG: [Coordinates]
+OUTPUT FORMAT:
+Generate 10-15 leads. Wrap each lead in [[LEAD_START]] and [[LEAD_END]].
+KEYS: NAME, ADDRESS, PHONE, EMAIL, SOCIAL, CHANNEL, WEB, DESC, LAT, LNG.
 
-STRICT FORMATTING:
-Wrap each lead in [[LEAD_START]] and [[LEAD_END]] tags.
-Use the keys: NAME, ADDRESS, PHONE, EMAIL, SOCIAL, CHANNEL, WEB, DESC, LAT, LNG.`;
+INTELLIGENCE GUIDELINE:
+- Provide high-fidelity email addresses only (verified public records).
+- Identify the most active 'CHANNEL' for outreach (where the brand is most engaged).`;
 
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-pro-preview",
-      contents: `TARGET: ${query.category} 
-LOCATION: ${query.location}
-BOOLEAN CONSTRAINTS: ${query.booleanLogic || 'None'}`,
+      contents: `SECTOR/PLATFORM: ${query.category} 
+TERRITORY: ${query.location}
+BOOLEAN CONSTRAINTS: ${query.booleanLogic || 'None'}
+SPECIAL REQUEST: Prioritize Shopify merchants if "Shopify" is detected in query. Ensure international phone formats.`,
       config: {
         systemInstruction,
         tools: [{ googleMaps: {} }, { googleSearch: {} }],
         ...(toolConfig ? { toolConfig } : {}),
-        temperature: 0.2,
+        temperature: 0.1,
       },
     });
 
     const text = response.text || "";
     return parseGeminiResponse(text);
   } catch (error) {
-    console.error("Matrix Extraction Failure:", error);
+    console.error("Global Extraction Failure:", error);
     throw error;
   }
 }

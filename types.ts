@@ -1,4 +1,6 @@
 
+export type Tier = 'SINGLE' | 'PRO' | 'ENTERPRISE';
+
 export interface Business {
   id: string;
   name: string;
