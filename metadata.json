@@ -1,0 +1,7 @@
+{
+  "name": "Occam Matrix",
+  "description": "A sharp, efficient tool to scan and export business data from Google Maps using Gemini 2.5's spatial grounding capabilities.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
