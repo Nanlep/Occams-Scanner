@@ -18,7 +18,7 @@ const App: React.FC = () => {
       setIsSyncing(true);
       // Simulate network latency for backend handshake
       await new Promise(resolve => setTimeout(resolve, 1800));
-      
+
       const savedResults = localStorage.getItem('om_last_results');
       const savedQuery = localStorage.getItem('om_last_query');
       if (savedResults) {
@@ -101,7 +101,7 @@ const App: React.FC = () => {
           <div className="relative group">
             <div className="absolute inset-0 bg-blue-500 blur-xl opacity-20 group-hover:opacity-40 transition-opacity"></div>
             <div className="w-14 h-14 border-2 border-blue-600 rounded flex items-center justify-center text-blue-500 bg-black relative shadow-2xl">
-               <i className="fas fa-globe text-2xl animate-spin-slow" style={{ animationDuration: '10s' }}></i>
+              <i className="fas fa-globe text-2xl animate-spin-slow" style={{ animationDuration: '10s' }}></i>
             </div>
           </div>
           <div className="text-left border-l-2 border-zinc-800 pl-8">
@@ -111,17 +111,17 @@ const App: React.FC = () => {
             <p className="text-[10px] text-zinc-600 uppercase tracking-[0.7em] font-black mt-3">Global Business Extraction Engine v4.0</p>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-8">
           {results.length > 0 && (
-            <button 
+            <button
               onClick={clearSession}
               className="text-[9px] text-zinc-600 hover:text-red-500 uppercase font-black tracking-widest transition-colors flex items-center gap-2"
             >
               <i className="fas fa-trash-alt"></i> Purge Cache
             </button>
           )}
-          <button 
+          <button
             onClick={() => setShowIntel(!showIntel)}
             className="group px-8 py-3 rounded border-2 border-zinc-900 bg-zinc-950 hover:border-zinc-700 transition-all shadow-xl"
           >
@@ -179,20 +179,19 @@ const App: React.FC = () => {
               GLOBAL <span className="text-blue-600 underline decoration-8 underline-offset-[16px]">MATRIX</span> SCAN.
             </h2>
             <p className="text-zinc-500 max-w-3xl mx-auto text-2xl font-light leading-relaxed mb-12">
-              Deep-extraction of global business data from Google Maps. 
-              Enterprise subscriptions are now capped at 5,000 monthly nodes for production stability.
+              Deep-extraction of global business data from Google Maps.
             </p>
           </div>
         )}
 
-        <ScannerUI 
-          onResults={(res, query) => handleResults(res, query)} 
-          onLoading={setIsLoading} 
+        <ScannerUI
+          onResults={(res, query) => handleResults(res, query)}
+          onLoading={setIsLoading}
         />
 
-        <ResultsTable 
-          businesses={results} 
-          isLoading={isLoading} 
+        <ResultsTable
+          businesses={results}
+          isLoading={isLoading}
           activeQuery={activeQuery}
         />
       </main>
@@ -209,7 +208,7 @@ const App: React.FC = () => {
               <i className="fas fa-check-double text-blue-900"></i> BACKEND SYNCED
             </div>
           </div>
-          
+
           <div className="flex items-center gap-8">
             <span className="text-[10px] text-zinc-700 uppercase font-black tracking-widest">Gateway Provider</span>
             <div className="px-8 py-3 bg-white rounded-sm flex items-center justify-center border-b-[6px] border-zinc-300 shadow-2xl">

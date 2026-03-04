@@ -10,9 +10,9 @@ interface ScannerUIProps {
 }
 
 const PRICING = {
-  SINGLE: { usd: 4.89, ngn: 4899, label: 'Single Burst', limit: '15 Leads / Burst' },
-  PRO: { usd: 37, ngn: 37000, label: 'Pro Node', limit: '15 Sessions / Mo' },
-  ENTERPRISE: { usd: 169, ngn: 169000, label: 'Enterprise Matrix', limit: '5,000 Nodes / Mo (Capped)' }
+  SINGLE: { usd: 4.89, ngn: 39775, label: 'Single Burst', limit: '1 Session', desc: 'One-time extraction for quick lead discovery.' },
+  PRO: { usd: 37, ngn: 198875, label: 'Pro Node', limit: '5 Sessions', desc: 'Monthly access for growing teams and agencies.' },
+  ENTERPRISE: { usd: 169, ngn: 795500, label: 'Enterprise Matrix', limit: '20 Sessions', desc: 'Full-scale extraction for enterprise operations.' }
 };
 
 export const ScannerUI: React.FC<ScannerUIProps> = ({ onResults, onLoading }) => {
@@ -165,11 +165,10 @@ export const ScannerUI: React.FC<ScannerUIProps> = ({ onResults, onLoading }) =>
           <button
             key={tier}
             onClick={() => setActiveTier(tier)}
-            className={`relative p-10 rounded-sm border-2 transition-all text-left overflow-hidden group hover:-translate-y-1 ${
-              activeTier === tier
-                ? 'bg-blue-600/10 border-blue-600 shadow-[0_30px_60px_rgba(37,99,235,0.15)]'
-                : 'bg-zinc-950 border-zinc-900 hover:border-zinc-700'
-            }`}
+            className={`relative p-10 rounded-sm border-2 transition-all text-left overflow-hidden group hover:-translate-y-1 ${activeTier === tier
+              ? 'bg-blue-600/10 border-blue-600 shadow-[0_30px_60px_rgba(37,99,235,0.15)]'
+              : 'bg-zinc-950 border-zinc-900 hover:border-zinc-700'
+              }`}
           >
             {activeTier === tier && <div className="scan-line opacity-20"></div>}
             <div className="flex justify-between items-start mb-8">
@@ -182,10 +181,14 @@ export const ScannerUI: React.FC<ScannerUIProps> = ({ onResults, onLoading }) =>
                 </div>
               )}
             </div>
-            <div className="text-4xl font-black text-white italic tracking-tighter mb-2">
+            <div className="text-4xl font-black text-white italic tracking-tighter mb-1">
               {currency === 'NGN' ? '₦' + PRICING[tier].ngn.toLocaleString() : '$' + PRICING[tier].usd}
             </div>
-            <p className="text-[10px] text-zinc-500 mt-8 uppercase font-bold tracking-widest leading-relaxed flex items-center gap-3">
+            <span className="text-[9px] text-zinc-600 uppercase tracking-widest font-bold">VAT 7.5% inclusive</span>
+            <p className="text-[11px] text-zinc-500 mt-5 leading-relaxed font-medium">
+              {PRICING[tier].desc}
+            </p>
+            <p className="text-[10px] text-zinc-500 mt-5 uppercase font-bold tracking-widest leading-relaxed flex items-center gap-3">
               <i className="fas fa-terminal text-blue-500/40"></i> {PRICING[tier].limit}
             </p>
           </button>
@@ -263,21 +266,21 @@ export const ScannerUI: React.FC<ScannerUIProps> = ({ onResults, onLoading }) =>
             <p className="text-[11px] text-zinc-500 uppercase tracking-widest mb-10 leading-relaxed font-medium">
               Provide your <span className="text-blue-500">Transaction ID</span> or <span className="text-blue-500">Digital Signature</span> from a previous session to restore multi-node access.
             </p>
-            <input 
-              type="text" 
-              placeholder="e.g. OM-REF-PRO-..." 
+            <input
+              type="text"
+              placeholder="e.g. OM-REF-PRO-..."
               className="w-full bg-black border-2 border-zinc-900 p-6 rounded-sm text-white mb-8 font-mono text-sm focus:border-blue-600 outline-none shadow-inner"
               value={restoreKey}
               onChange={e => setRestoreKey(e.target.value)}
             />
             <div className="flex gap-4">
-               <button 
+              <button
                 onClick={handleRestoreLicense}
                 className="flex-1 bg-white text-black font-black py-5 rounded-sm uppercase tracking-widest text-[11px] hover:bg-blue-600 hover:text-white transition-all shadow-xl active:scale-95"
               >
                 Validate Identity
               </button>
-              <button 
+              <button
                 onClick={() => setShowRestoreModal(false)}
                 className="px-8 border-2 border-zinc-900 text-zinc-500 font-black py-5 rounded-sm uppercase tracking-widest text-[11px] hover:border-zinc-700 hover:text-zinc-300 transition-all"
               >
