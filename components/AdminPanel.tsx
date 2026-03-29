@@ -15,7 +15,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 }) => {
   const [passwordInput, setPasswordInput] = useState('');
   const [passwordError, setPasswordError] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(true);
 
   const handlePasswordSubmit = () => {
     setPasswordError(false);
