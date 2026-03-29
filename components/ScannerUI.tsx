@@ -7,6 +7,7 @@ import { scanBusinesses } from '../services/geminiService';
 interface ScannerUIProps {
   onResults: (results: Business[], query: ScanQuery) => void;
   onLoading: (isLoading: boolean) => void;
+  sandboxMode?: boolean;
 }
 
 const PRICING = {
@@ -15,7 +16,7 @@ const PRICING = {
   ENTERPRISE: { usd: 169, ngn: 795500, label: 'Enterprise Matrix', limit: '20 Sessions', desc: 'Full-scale extraction for enterprise operations.' }
 };
 
-export const ScannerUI: React.FC<ScannerUIProps> = ({ onResults, onLoading }) => {
+export const ScannerUI: React.FC<ScannerUIProps> = ({ onResults, onLoading, sandboxMode = false }) => {
   const { BaniPopUp } = useCheckout();
   const [query, setQuery] = useState<ScanQuery>({ category: '', location: '', booleanLogic: '' });
   const [currency, setCurrency] = useState<'USD' | 'NGN'>('NGN');
@@ -85,6 +86,14 @@ export const ScannerUI: React.FC<ScannerUIProps> = ({ onResults, onLoading }) =>
       return;
     }
 
+    // Check sandbox mode first - bypass payment entirely
+    if (sandboxMode) {
+      addLog('Sandbox mode active - Payment gateways bypassed.', 'success');
+      setAuthorizedTier('SANDBOX');
+      executeDeepScan();
+      return;
+    }
+
     const hasEnterprise = authorizedTier === 'ENTERPRISE';
     const hasPro = authorizedTier === 'PRO' && activeTier !== 'ENTERPRISE';
 
@@ -139,13 +148,21 @@ export const ScannerUI: React.FC<ScannerUIProps> = ({ onResults, onLoading }) =>
     addLog(`Scanning territory [${query.location}] for [${query.category}]...`, 'info');
 
     try {
-      const results = await scanBusinesses(query);
+      const queryWithSandboxFlag: ScanQuery = {
+        ...query,
+        isSandbox: sandboxMode
+      };
+      
+      const results = await scanBusinesses(queryWithSandboxFlag);
       if (results.length === 0) {
         addLog('Zero signals detected in target coordinates.', 'warning');
         setError('MANIFEST EMPTY: Region returned no matching signals.');
       } else {
         addLog(`Extraction complete. ${results.length} nodes successfully mapped.`, 'success');
-        onResults(results, query);
+        if (sandboxMode) {
+          addLog('Sandbox mode extraction recorded for audit.', 'info');
+        }
+        onResults(results, queryWithSandboxFlag);
       }
     } catch (err: any) {
       addLog(`Critical stream error: ${err.message || 'Unknown Protocol Failure'}`, 'error');

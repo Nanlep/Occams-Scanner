@@ -1,5 +1,10 @@
 
-export type Tier = 'SINGLE' | 'PRO' | 'ENTERPRISE';
+export type Tier = 'SINGLE' | 'PRO' | 'ENTERPRISE' | 'SANDBOX';
+
+export interface SandboxMode {
+  enabled: boolean;
+  activatedAt: string;
+}
 
 export interface SocialFootprint {
   linkedin?: string;
@@ -29,6 +34,7 @@ export interface ScanQuery {
   category: string;
   location: string;
   booleanLogic?: string;
+  isSandbox?: boolean;
 }
 
 export interface SystemLog {

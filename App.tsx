@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { ScannerUI } from './components/ScannerUI';
 import { ResultsTable } from './components/ResultsTable';
+import { AdminPanel } from './components/AdminPanel';
 import { Business, ScanQuery } from './types';
 
 const App: React.FC = () => {
@@ -11,6 +12,8 @@ const App: React.FC = () => {
   const [showIntel, setShowIntel] = useState(false);
   const [isSyncing, setIsSyncing] = useState(true);
   const [nodeHealth, setNodeHealth] = useState(100);
+  const [sandboxMode, setSandboxMode] = useState(false);
+  const [adminAuthenticated, setAdminAuthenticated] = useState(false);
 
   // Simulated Backend Sync
   useEffect(() => {
@@ -30,6 +33,25 @@ const App: React.FC = () => {
           localStorage.removeItem('om_last_results');
         }
       }
+
+      // Initialize sandbox mode from localStorage
+      const sandboxEnabled = localStorage.getItem('om_sandbox_enabled') === 'true';
+      setSandboxMode(sandboxEnabled);
+
+      // Check admin authentication and enforce 1-hour timeout
+      const adminAuth = localStorage.getItem('om_admin_auth');
+      const adminAuthTime = localStorage.getItem('om_admin_auth_time');
+      if (adminAuth === 'true' && adminAuthTime) {
+        const authAgeMs = Date.now() - parseInt(adminAuthTime);
+        const oneHourMs = 60 * 60 * 1000;
+        if (authAgeMs < oneHourMs) {
+          setAdminAuthenticated(true);
+        } else {
+          localStorage.removeItem('om_admin_auth');
+          localStorage.removeItem('om_admin_auth_time');
+        }
+      }
+
       setIsSyncing(false);
     };
 
@@ -48,6 +70,22 @@ const App: React.FC = () => {
       setActiveQuery(query);
       localStorage.setItem('om_last_results', JSON.stringify(newResults));
       localStorage.setItem('om_last_query', JSON.stringify(query));
+    }
+  };
+
+  const handleSandboxToggle = (enabled: boolean) => {
+    setSandboxMode(enabled);
+    localStorage.setItem('om_sandbox_enabled', enabled ? 'true' : 'false');
+  };
+
+  const handleAdminAuthenticate = (authenticated: boolean) => {
+    setAdminAuthenticated(authenticated);
+    if (authenticated) {
+      localStorage.setItem('om_admin_auth', 'true');
+      localStorage.setItem('om_admin_auth_time', Date.now().toString());
+    } else {
+      localStorage.removeItem('om_admin_auth');
+      localStorage.removeItem('om_admin_auth_time');
     }
   };
 
@@ -187,6 +225,7 @@ const App: React.FC = () => {
         <ScannerUI
           onResults={(res, query) => handleResults(res, query)}
           onLoading={setIsLoading}
+          sandboxMode={sandboxMode}
         />
 
         <ResultsTable
@@ -221,6 +260,13 @@ const App: React.FC = () => {
           </div>
         </div>
       </footer>
+
+      <AdminPanel
+        sandboxMode={sandboxMode}
+        onSandboxToggle={handleSandboxToggle}
+        isAuthenticated={adminAuthenticated}
+        onAuthenticate={handleAdminAuthenticate}
+      />
     </div>
   );
 };

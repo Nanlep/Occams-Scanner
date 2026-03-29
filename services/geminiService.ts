@@ -3,7 +3,7 @@ import { GoogleGenAI } from "@google/genai";
 import { Business, ScanQuery } from "../types";
 
 export async function scanBusinesses(query: ScanQuery): Promise<Business[]> {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
   
   let toolConfig = undefined;
   try {
@@ -26,12 +26,12 @@ export async function scanBusinesses(query: ScanQuery): Promise<Business[]> {
   }
 
   const systemInstruction = `You are the Occam Matrix Intelligence Engine. 
-Extract high-fidelity business data and identify Market Leaders (Founders, CEOs, Directors) using Google Maps and web grounding.
+Extract high-fidelity business data and identify Market Leaders (Founders, CEOs, Directors) using Google Maps grounding.
 
 CRITICAL RULES:
 - BOOLEAN RESOLUTION: Apply the Boolean script precisely (e.g., "${query.booleanLogic}").
-- SOCIAL MINING: Find specific profiles on LinkedIn, Twitter, and Facebook.
-- CONTACT FIDELITY: Prioritize corporate emails.
+- LOCATION FOCUS: Use Google Maps data for verified business locations and contact information.
+- CONTACT FIDELITY: Prioritize corporate emails and phone numbers.
 
 OUTPUT:
 Generate 10-15 leads. Wrap each lead in [[LEAD_START]] and [[LEAD_END]].
@@ -46,7 +46,7 @@ LOCATION: ${query.location}
 BOOLEAN SCRIPT: ${query.booleanLogic || 'Standard Extraction'}`,
       config: {
         systemInstruction,
-        tools: [{ googleMaps: {} }, { googleSearch: {} }],
+        tools: [{ googleMaps: {} }],
         ...(toolConfig ? { toolConfig } : {}),
         temperature: 0.1,
       },
